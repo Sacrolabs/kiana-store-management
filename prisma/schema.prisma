@@ -21,12 +21,23 @@ enum ExpenseStatus {
   PAID
 }
 
+enum UserRole {
+  ADMIN
+  USER
+}
+
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                String    @id @default(uuid())
+  email             String    @unique
+  name              String
+  password          String
+  role              UserRole  @default(USER)
+  emailVerified     Boolean   @default(false) @map("email_verified")
+  resetToken        String?   @map("reset_token")
+  resetTokenExpiry  DateTime? @map("reset_token_expiry")
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@map("users")
 }

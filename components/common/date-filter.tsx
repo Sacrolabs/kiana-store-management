@@ -31,9 +31,10 @@ interface DateFilterProps {
   onChange: (range: DateRange) => void;
   preset: DateFilterPreset;
   onPresetChange: (preset: DateFilterPreset) => void;
+  limitedPresets?: boolean; // If true, only show today, week, month
 }
 
-export function DateFilter({ value, onChange, preset, onPresetChange }: DateFilterProps) {
+export function DateFilter({ value, onChange, preset, onPresetChange, limitedPresets = false }: DateFilterProps) {
   const [customFrom, setCustomFrom] = useState(format(value.from, "yyyy-MM-dd"));
   const [customTo, setCustomTo] = useState(format(value.to, "yyyy-MM-dd"));
 
@@ -83,8 +84,8 @@ export function DateFilter({ value, onChange, preset, onPresetChange }: DateFilt
           <SelectItem value="today">Today</SelectItem>
           <SelectItem value="week">This Week</SelectItem>
           <SelectItem value="month">This Month</SelectItem>
-          <SelectItem value="year">This Year</SelectItem>
-          <SelectItem value="custom">Custom Range</SelectItem>
+          {!limitedPresets && <SelectItem value="year">This Year</SelectItem>}
+          {!limitedPresets && <SelectItem value="custom">Custom Range</SelectItem>}
         </SelectContent>
       </Select>
 

@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, DollarSign, Clock, Store as StoreIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AppLayout } from "@/components/layout/app-layout";
 import { formatCurrency } from "@/lib/currency/utils";
 import { DateFilter, DateRange, DateFilterPreset } from "@/components/common/date-filter";
 import { toast } from "sonner";
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, startOfWeek } from "date-fns";
 import {
   BarChart,
   Bar,
@@ -25,17 +26,19 @@ import {
 export default function ReportsPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [stores, setStores] = useState<any[]>([]);
+  const [selectedStoreId, setSelectedStoreId] = useState<string>("all");
 
   // Date filtering state
-  const [datePreset, setDatePreset] = useState<DateFilterPreset>("today");
+  const [datePreset, setDatePreset] = useState<DateFilterPreset>("week");
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: startOfDay(new Date()),
+    from: startOfWeek(new Date(), { weekStartsOn: 1 }),
     to: endOfDay(new Date()),
   });
 
   useEffect(() => {
     fetchStats();
-  }, [dateRange]); // Refetch when date range changes
+  }, [dateRange, selectedStoreId]); // Refetch when date range or store filter changes
 
   const fetchStats = async () => {
     try {
@@ -50,24 +53,38 @@ export default function ReportsPage() {
       ]);
 
       const salesData = await salesRes.json();
-      const stores = await storesRes.json();
+      const storesData = await storesRes.json();
       const attendanceData = await attendanceRes.json();
       const expensesData = await expensesRes.json();
 
-      // Filter data by date range
-      const sales = salesData.filter((sale: any) => {
+      // Store stores in state for filter - ensure it's always an array
+      setStores(Array.isArray(storesData) ? storesData : []);
+
+      // Ensure all data is arrays
+      const safeSalesData = Array.isArray(salesData) ? salesData : [];
+      const safeAttendanceData = Array.isArray(attendanceData) ? attendanceData : [];
+      const safeExpensesData = Array.isArray(expensesData) ? expensesData : [];
+
+      // Filter data by date range and store
+      const sales = safeSalesData.filter((sale: any) => {
         const saleDate = new Date(sale.date);
-        return saleDate >= dateRange.from && saleDate <= dateRange.to;
+        const dateMatch = saleDate >= dateRange.from && saleDate <= dateRange.to;
+        const storeMatch = selectedStoreId === "all" || sale.storeId === selectedStoreId;
+        return dateMatch && storeMatch;
       });
 
-      const attendance = attendanceData.filter((record: any) => {
+      const attendance = safeAttendanceData.filter((record: any) => {
         const checkInDate = new Date(record.checkIn);
-        return checkInDate >= dateRange.from && checkInDate <= dateRange.to;
+        const dateMatch = checkInDate >= dateRange.from && checkInDate <= dateRange.to;
+        const storeMatch = selectedStoreId === "all" || record.storeId === selectedStoreId;
+        return dateMatch && storeMatch;
       });
 
-      const expenses = expensesData.filter((expense: any) => {
+      const expenses = safeExpensesData.filter((expense: any) => {
         const expenseDate = new Date(expense.expenseDate);
-        return expenseDate >= dateRange.from && expenseDate <= dateRange.to;
+        const dateMatch = expenseDate >= dateRange.from && expenseDate <= dateRange.to;
+        const storeMatch = selectedStoreId === "all" || expense.storeId === selectedStoreId;
+        return dateMatch && storeMatch;
       });
 
       // Calculate statistics
@@ -108,11 +125,27 @@ export default function ReportsPage() {
         return acc;
       }, {});
 
+      // Calculate profit (sales - expenses - payroll)
+      const profit: any = {};
+      const allCurrencies = new Set([
+        ...Object.keys(totalSales),
+        ...Object.keys(totalExpenses),
+        ...Object.keys(totalPayroll),
+      ]);
+
+      allCurrencies.forEach((currency) => {
+        const salesAmount = totalSales[currency] || 0;
+        const expensesAmount = totalExpenses[currency]?.total || 0;
+        const payrollAmount = totalPayroll[currency] || 0;
+        profit[currency] = salesAmount - expensesAmount - payrollAmount;
+      });
+
       setStats({
-        stores: stores.length,
+        stores: storesData.length,
         totalSales,
         totalPayroll,
         totalExpenses,
+        profit,
         totalHours,
         salesByStore,
         salesCount: sales.length,
@@ -149,69 +182,49 @@ export default function ReportsPage() {
             </p>
           </div>
 
-          {/* Date Filter */}
-          <div className="px-4 pb-4">
+          {/* Filters */}
+          <div className="px-4 pb-4 space-y-3">
             <DateFilter
               value={dateRange}
               onChange={setDateRange}
               preset={datePreset}
               onPresetChange={setDatePreset}
             />
+
+            {/* Store Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Store:</span>
+              <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select store" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Stores</SelectItem>
+                  {stores.map((store) => (
+                    <SelectItem key={store.id} value={store.id}>
+                      {store.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4 space-y-4">
           {/* Overview Cards */}
-          <div className="grid grid-cols-2 gap-3">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Stores
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.stores || 0}</div>
-                <StoreIcon className="h-4 w-4 text-muted-foreground mt-1" />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Sales
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.salesCount || 0}</div>
-                <DollarSign className="h-4 w-4 text-muted-foreground mt-1" />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Attendance Records
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.attendanceCount || 0}</div>
-                <Clock className="h-4 w-4 text-muted-foreground mt-1" />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Hours
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.totalHours?.toFixed(1) || "0.0"}</div>
-                <Clock className="h-4 w-4 text-muted-foreground mt-1" />
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Stores
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.stores || 0}</div>
+              <StoreIcon className="h-4 w-4 text-muted-foreground mt-1" />
+            </CardContent>
+          </Card>
 
           {/* Revenue Distribution Chart */}
           {stats?.totalSales && Object.keys(stats.totalSales).length > 0 && (
@@ -345,19 +358,83 @@ export default function ReportsPage() {
                 <CardTitle>Total Expenses</CardTitle>
                 <CardDescription>Business expenses by currency</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(stats.totalExpenses).map(([currency, amount]: [string, any]) => (
-                  <div key={currency} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+              <CardContent className="space-y-4">
+                {Object.entries(stats.totalExpenses).map(([currency, amounts]: [string, any]) => (
+                  <div key={currency} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          currency === "EUR" ? "bg-eur" : "bg-gbp"
+                        }`} />
+                        <span className="font-medium">{currency}</span>
+                      </div>
+                      <div className={`text-lg font-bold ${
+                        currency === "EUR" ? "text-eur" : "text-gbp"
+                      }`}>
+                        {formatCurrency(amounts.total, currency as any)}
+                      </div>
+                    </div>
+                    <div className="ml-4 space-y-1 text-sm">
+                      <div className="flex items-center justify-between text-muted-foreground">
+                        <span>Paid:</span>
+                        <span className="font-medium">{formatCurrency(amounts.paid, currency as any)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-muted-foreground">
+                        <span>Pending:</span>
+                        <span className="font-medium">{formatCurrency(amounts.pending, currency as any)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Profit Calculation */}
+          {stats?.profit && Object.keys(stats.profit).length > 0 && (
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle>Net Profit</CardTitle>
+                <CardDescription>Profit calculation breakdown</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Object.entries(stats.profit).map(([currency]: [string, any]) => (
+                  <div key={currency} className="space-y-2">
+                    <div className="flex items-center gap-2 mb-3">
                       <div className={`w-2 h-2 rounded-full ${
                         currency === "EUR" ? "bg-eur" : "bg-gbp"
                       }`} />
-                      <span className="font-medium">{currency}</span>
+                      <span className="font-semibold">{currency}</span>
                     </div>
-                    <div className={`text-lg font-bold ${
-                      currency === "EUR" ? "text-eur" : "text-gbp"
-                    }`}>
-                      {formatCurrency(amount, currency as any)}
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Total Sales</span>
+                        <span className="font-medium text-green-600">
+                          {formatCurrency(stats.totalSales[currency] || 0, currency as any)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Total Expenses</span>
+                        <span className="font-medium text-red-600">
+                          - {formatCurrency(stats.totalExpenses[currency]?.total || 0, currency as any)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Labour Payments</span>
+                        <span className="font-medium text-red-600">
+                          - {formatCurrency(stats.totalPayroll[currency] || 0, currency as any)}
+                        </span>
+                      </div>
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Net Profit</span>
+                          <span className={`text-lg font-bold ${
+                            stats.profit[currency] >= 0 ? "text-green-600" : "text-red-600"
+                          }`}>
+                            {formatCurrency(stats.profit[currency], currency as any)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

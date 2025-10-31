@@ -13,7 +13,7 @@ import { formatCurrency } from "@/lib/currency/utils";
 import { DateFilter, DateRange, DateFilterPreset } from "@/components/common/date-filter";
 import { AttendanceDialog } from "@/components/attendance/attendance-dialog";
 import { toast } from "sonner";
-import { format, startOfDay, endOfDay } from "date-fns";
+import { format, startOfDay, endOfDay, startOfWeek } from "date-fns";
 export default function AttendancePage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [attendance, setAttendance] = useState<AttendanceWithRelations[]>([]);
@@ -22,9 +22,9 @@ export default function AttendancePage() {
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
 
   // Date filtering state
-  const [datePreset, setDatePreset] = useState<DateFilterPreset>("today");
+  const [datePreset, setDatePreset] = useState<DateFilterPreset>("week");
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: startOfDay(new Date()),
+    from: startOfWeek(new Date(), { weekStartsOn: 1 }),
     to: endOfDay(new Date()),
   });
 
@@ -110,6 +110,7 @@ export default function AttendancePage() {
               onChange={setDateRange}
               preset={datePreset}
               onPresetChange={setDatePreset}
+              limitedPresets={true}
             />
           </div>
 

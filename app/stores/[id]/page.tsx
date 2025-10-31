@@ -18,7 +18,7 @@ import { AttendanceDialog } from "@/components/attendance/attendance-dialog";
 import { SalesDialog } from "@/components/sales/sales-dialog";
 import { ExpensesDialog } from "@/components/expenses/expenses-dialog";
 import { toast } from "sonner";
-import { format, startOfDay, endOfDay } from "date-fns";
+import { format, startOfDay, endOfDay, startOfWeek } from "date-fns";
 
 export default function StoreDetailPage() {
   const params = useParams();
@@ -39,9 +39,9 @@ export default function StoreDetailPage() {
   const [employeesRefreshKey, setEmployeesRefreshKey] = useState(0);
 
   // Date filtering state
-  const [datePreset, setDatePreset] = useState<DateFilterPreset>("today");
+  const [datePreset, setDatePreset] = useState<DateFilterPreset>("week");
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: startOfDay(new Date()),
+    from: startOfWeek(new Date(), { weekStartsOn: 1 }),
     to: endOfDay(new Date()),
   });
 
@@ -270,6 +270,7 @@ export default function StoreDetailPage() {
               onChange={setDateRange}
               preset={datePreset}
               onPresetChange={setDatePreset}
+              limitedPresets={true}
             />
           </div>
         </div>

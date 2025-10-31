@@ -11,7 +11,7 @@ import { SaleWithStore } from "@/lib/types/sale";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency/utils";
 import { DateFilter, DateRange, DateFilterPreset } from "@/components/common/date-filter";
 import { toast } from "sonner";
-import { format, startOfDay, endOfDay } from "date-fns";
+import { format, startOfDay, endOfDay, startOfWeek } from "date-fns";
 
 export default function SalesPage() {
   const [sales, setSales] = useState<SaleWithStore[]>([]);
@@ -21,9 +21,9 @@ export default function SalesPage() {
   const [selectedSale, setSelectedSale] = useState<SaleWithStore | null>(null);
 
   // Date filtering state
-  const [datePreset, setDatePreset] = useState<DateFilterPreset>("today");
+  const [datePreset, setDatePreset] = useState<DateFilterPreset>("week");
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: startOfDay(new Date()),
+    from: startOfWeek(new Date(), { weekStartsOn: 1 }),
     to: endOfDay(new Date()),
   });
 
@@ -142,6 +142,7 @@ export default function SalesPage() {
               onChange={setDateRange}
               preset={datePreset}
               onPresetChange={setDatePreset}
+              limitedPresets={true}
             />
           </div>
 
