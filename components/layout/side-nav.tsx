@@ -42,6 +42,7 @@ const navItems = [
 
 export function SideNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   return (
     <nav className="hidden md:flex md:flex-col w-64 bg-background border-r min-h-screen">
@@ -76,6 +77,20 @@ export function SideNav() {
           })}
         </div>
       </div>
+
+      {/* User Section */}
+      {user && (
+        <div className="p-4 border-t">
+          <div className="mb-3 px-4">
+            <div className="flex items-center gap-2 mb-1">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm font-medium">{user.name}</p>
+            </div>
+            <p className="text-xs text-muted-foreground">{user.email}</p>
+          </div>
+          <LogoutButton />
+        </div>
+      )}
     </nav>
   );
 }

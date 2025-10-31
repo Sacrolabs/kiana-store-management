@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store, DollarSign, Users, BarChart3, Receipt } from "lucide-react";
+import { Store, DollarSign, Users, BarChart3, Receipt, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/context";
+import { LogoutButton } from "@/components/auth/logout-button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const navItems = [
   {
@@ -35,6 +44,7 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t safe-bottom md:hidden">
@@ -59,6 +69,35 @@ export function BottomNav() {
             </Link>
           );
         })}
+
+        {/* User Menu */}
+        {user && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                className={cn(
+                  "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors tap-highlight-none active:bg-accent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <User className="h-5 w-5" />
+                <span className="text-xs font-medium">Profile</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-xl">
+              <SheetHeader>
+                <SheetTitle>Profile</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6 space-y-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">{user.name}</p>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                </div>
+                <LogoutButton />
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
       </div>
     </nav>
   );
