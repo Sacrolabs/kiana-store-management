@@ -40,8 +40,6 @@ function questionHidden(prompt: string): Promise<string> {
     stdin.setEncoding("utf8");
 
     const onData = (char: string) => {
-      char = char.toString("utf8");
-
       switch (char) {
         case "\n":
         case "\r":

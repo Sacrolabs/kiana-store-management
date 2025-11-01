@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Employee } from "@/lib/types/employee";
 import { Store } from "@/lib/types/store";
-import { Currency } from "@/lib/types/currency";
+import { Currency } from "@/lib/generated/prisma";
 import { toast } from "sonner";
 import { format } from "date-fns";
 

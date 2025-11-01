@@ -247,7 +247,7 @@ export default function ReportsPage() {
                       cx="50%"
                       cy="50%"
                       outerRadius={80}
-                      label={(entry) => `${entry.name}: ${formatCurrency(entry.value * 100, entry.name as any)}`}
+                      label={(entry: any) => `${entry.name}: ${formatCurrency((entry.value as number) * 100, entry.name as any)}`}
                     >
                       {Object.entries(stats.totalSales).map(([currency], index) => (
                         <Cell key={`cell-${index}`} fill={currency === "EUR" ? "#3b82f6" : "#10b981"} />

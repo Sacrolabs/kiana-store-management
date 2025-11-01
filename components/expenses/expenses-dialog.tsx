@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Store } from "@/lib/types/store";
 import { Vendor } from "@/lib/types/vendor";
-import { Currency } from "@/lib/types/currency";
+import { Currency } from "@/lib/generated/prisma";
 import { CurrencyInput } from "@/components/sales/currency-input";
 import { formatCurrency } from "@/lib/currency/utils";
 import { toast } from "sonner";
