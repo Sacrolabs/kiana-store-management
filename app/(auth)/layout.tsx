@@ -12,7 +12,7 @@ export default function AuthLayout({
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Image
-              src="/icon-192.png"
+              src="/icon-192x192.png"
               alt="Store Management"
               width={80}
               height={80}

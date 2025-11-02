@@ -39,8 +39,8 @@ export function SplashScreen({ onComplete, minDuration = 1500 }: SplashScreenPro
         <div className="absolute inset-0 animate-pulse rounded-full bg-white/20 blur-2xl" />
         <div className="relative">
           <Image
-            src="/icon-192.png"
-            alt="Store Management"
+            src="/icon-192x192.png"
+            alt="Kiana Food Company"
             width={120}
             height={120}
             className="rounded-3xl shadow-2xl"
@@ -51,11 +51,11 @@ export function SplashScreen({ onComplete, minDuration = 1500 }: SplashScreenPro
 
       {/* App Name */}
       <h1 className="mb-2 text-3xl font-bold text-white animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-        Store Management
+        Kiana Food Company
       </h1>
 
       <p className="mb-8 text-sm text-white/80 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-        Mobile-first business management
+        Powered by Blazecode.io
       </p>
 
       {/* Loading Spinner */}
