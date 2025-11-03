@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store, DollarSign, Users, BarChart3, Receipt, Settings, User } from "lucide-react";
+import { Store, DollarSign, Users, BarChart3, Receipt, Settings, User, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/context";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -17,6 +17,11 @@ const navItems = [
     label: "Sales",
     icon: DollarSign,
     href: "/sales",
+  },
+  {
+    label: "Drivers",
+    icon: Truck,
+    href: "/drivers",
   },
   {
     label: "Staff",
