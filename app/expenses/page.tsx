@@ -185,7 +185,6 @@ export default function ExpensesPage() {
               onChange={setDateRange}
               preset={datePreset}
               onPresetChange={setDatePreset}
-              limitedPresets={true}
             />
           </div>
 

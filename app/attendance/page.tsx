@@ -110,7 +110,6 @@ export default function AttendancePage() {
               onChange={setDateRange}
               preset={datePreset}
               onPresetChange={setDatePreset}
-              limitedPresets={true}
             />
           </div>
 

@@ -142,7 +142,6 @@ export default function SalesPage() {
               onChange={setDateRange}
               preset={datePreset}
               onPresetChange={setDatePreset}
-              limitedPresets={true}
             />
           </div>
 
