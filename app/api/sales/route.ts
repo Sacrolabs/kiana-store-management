@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { Currency } from "@/lib/generated/prisma";
+import { handlePrismaError } from "@/lib/utils/prisma-errors";
+import { safeJsonParse, parseInteger, parseDate, validateUUID, isValidDate } from "@/lib/utils/validation";
 
 // GET /api/sales - List sales with optional filters
 export async function GET(request: NextRequest) {
@@ -14,6 +16,7 @@ export async function GET(request: NextRequest) {
     const where: any = {};
 
     if (storeId) {
+      validateUUID(storeId, "storeId");
       where.storeId = storeId;
     }
 
@@ -24,10 +27,10 @@ export async function GET(request: NextRequest) {
     if (startDate || endDate) {
       where.date = {};
       if (startDate) {
-        where.date.gte = new Date(startDate);
+        where.date.gte = parseDate(startDate, "startDate");
       }
       if (endDate) {
-        where.date.lte = new Date(endDate);
+        where.date.lte = parseDate(endDate, "endDate");
       }
     }
 
@@ -47,11 +50,22 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(sales);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching sales:", error);
+
+    // Handle validation errors
+    if (error.message && error.message.includes("Invalid")) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
+    // Handle Prisma errors
+    const prismaError = handlePrismaError(error);
     return NextResponse.json(
-      { error: "Failed to fetch sales" },
-      { status: 500 }
+      { error: prismaError.message },
+      { status: prismaError.status }
     );
   }
 }
@@ -59,7 +73,7 @@ export async function GET(request: NextRequest) {
 // POST /api/sales - Create new sale
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await safeJsonParse(request);
     const { storeId, currency, date, cash, online, delivery, justEat, mylocal, creditCard, notes } = body;
 
     // Validation
@@ -69,6 +83,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    validateUUID(storeId, "storeId");
 
     if (!currency || (currency !== "EUR" && currency !== "GBP")) {
       return NextResponse.json(
@@ -97,21 +113,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert amounts to integers (already in minor units from frontend)
-    const cashAmount = parseInt(cash) || 0;
-    const onlineAmount = parseInt(online) || 0;
-    const deliveryAmount = parseInt(delivery) || 0;
-    const justEatAmount = parseInt(justEat) || 0;
-    const mylocalAmount = parseInt(mylocal) || 0;
-    const creditCardAmount = parseInt(creditCard) || 0;
+    // Parse and validate amounts (in minor units from frontend)
+    const cashAmount = cash !== undefined ? parseInteger(cash, "cash", { min: 0 }) : 0;
+    const onlineAmount = online !== undefined ? parseInteger(online, "online", { min: 0 }) : 0;
+    const deliveryAmount = delivery !== undefined ? parseInteger(delivery, "delivery", { min: 0 }) : 0;
+    const justEatAmount = justEat !== undefined ? parseInteger(justEat, "justEat", { min: 0 }) : 0;
+    const mylocalAmount = mylocal !== undefined ? parseInteger(mylocal, "mylocal", { min: 0 }) : 0;
+    const creditCardAmount = creditCard !== undefined ? parseInteger(creditCard, "creditCard", { min: 0 }) : 0;
 
     const total = cashAmount + onlineAmount + deliveryAmount + justEatAmount + mylocalAmount + creditCardAmount;
+
+    // Validate date if provided
+    const saleDate = date ? parseDate(date, "date") : new Date();
 
     const sale = await prisma.sale.create({
       data: {
         storeId,
         currency: currency as Currency,
-        date: date ? new Date(date) : new Date(),
+        date: saleDate,
         cash: cashAmount,
         online: onlineAmount,
         delivery: deliveryAmount,
@@ -132,11 +151,22 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(sale, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating sale:", error);
+
+    // Handle validation errors
+    if (error.message && (error.message.includes("Invalid") || error.message.includes("required"))) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
+    // Handle Prisma errors
+    const prismaError = handlePrismaError(error);
     return NextResponse.json(
-      { error: "Failed to create sale" },
-      { status: 500 }
+      { error: prismaError.message },
+      { status: prismaError.status }
     );
   }
 }

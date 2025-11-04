@@ -13,14 +13,14 @@ export default function AuthLayout({
           <div className="flex justify-center mb-4">
             <Image
               src="/icon-192x192.png"
-              alt="Store Management"
+              alt="Kiana Store Management"
               width={80}
               height={80}
               className="rounded-2xl shadow-lg"
             />
           </div>
           <h1 className="text-3xl font-bold text-foreground">
-            Store Management
+            Kiana Store Management
           </h1>
           <p className="text-muted-foreground mt-2">
             Manage your business efficiently
@@ -32,7 +32,7 @@ export default function AuthLayout({
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-8">
-          © {new Date().getFullYear()} Store Management. All rights reserved.
+          © {new Date().getFullYear()} Kiana Store Management by blazecode.io . All rights reserved.
         </p>
       </div>
     </div>

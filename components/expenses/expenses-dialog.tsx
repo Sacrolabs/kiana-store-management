@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Store } from "@/lib/types/store";
 import { Vendor } from "@/lib/types/vendor";
-import { Currency } from "@/lib/generated/prisma";
+import { Currency, ExpenseStatus } from "@/lib/generated/prisma";
 import { CurrencyInput } from "@/components/sales/currency-input";
 import { formatCurrency } from "@/lib/currency/utils";
 import { toast } from "sonner";
@@ -57,6 +57,7 @@ export function ExpensesDialog({
   const [expenseDate, setExpenseDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [amount, setAmount] = useState(0);
   const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<ExpenseStatus>("RAISED");
 
   // Fetch vendors when dialog opens
   useEffect(() => {
@@ -76,6 +77,7 @@ export function ExpensesDialog({
       setExpenseDate(format(new Date(expenseToEdit.expenseDate), "yyyy-MM-dd"));
       setAmount(expenseToEdit.amount);
       setDescription(expenseToEdit.description || "");
+      setStatus(expenseToEdit.status as ExpenseStatus);
     } else if (open && storeId) {
       setSelectedStoreId(storeId);
       // Set default currency based on store's default currency
@@ -146,6 +148,7 @@ export function ExpensesDialog({
           expenseDate: new Date(expenseDate).toISOString(),
           amount,
           description: description.trim() || undefined,
+          ...(editMode && { status }),
         }),
       });
 
@@ -171,6 +174,7 @@ export function ExpensesDialog({
     setExpenseDate(format(new Date(), "yyyy-MM-dd"));
     setAmount(0);
     setDescription("");
+    setStatus("RAISED");
     setEditMode(false);
     setExpenseId(null);
     onClose();
@@ -301,6 +305,37 @@ export function ExpensesDialog({
               rows={3}
             />
           </div>
+
+          {/* Status (only in edit mode) */}
+          {editMode && (
+            <div className="space-y-2">
+              <Label htmlFor="status">Payment Status *</Label>
+              <Select
+                value={status}
+                onValueChange={(value) => setStatus(value as ExpenseStatus)}
+              >
+                <SelectTrigger id="status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="RAISED">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Pending
+                      </span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="PAID">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Paid
+                      </span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, DollarSign, Receipt } from "lucide-react";
+import { Plus, DollarSign, Receipt, CheckCircle, Pencil, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +22,7 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [vendorDialogOpen, setVendorDialogOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<VendorWithExpenseCount | null>(null);
+  const [confirmUnpaidDialog, setConfirmUnpaidDialog] = useState<string | null>(null);
 
   // Date filtering state
   const [datePreset, setDatePreset] = useState<DateFilterPreset>("week");
@@ -122,6 +123,47 @@ export default function ExpensesPage() {
 
   const handleVendorSuccess = () => {
     fetchVendors();
+  };
+
+  const handleMarkAsPaid = async (expenseId: string) => {
+    try {
+      const response = await fetch(`/api/expenses/${expenseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "PAID" }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to mark expense as paid");
+      }
+
+      toast.success("Expense marked as paid");
+      fetchExpenses();
+    } catch (error) {
+      console.error("Error marking expense as paid:", error);
+      toast.error("Failed to mark expense as paid");
+    }
+  };
+
+  const handleMarkAsUnpaid = async (expenseId: string) => {
+    try {
+      const response = await fetch(`/api/expenses/${expenseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "RAISED" }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to mark expense as unpaid");
+      }
+
+      toast.success("Expense marked as unpaid");
+      fetchExpenses();
+      setConfirmUnpaidDialog(null);
+    } catch (error) {
+      console.error("Error marking expense as unpaid:", error);
+      toast.error("Failed to mark expense as unpaid");
+    }
   };
 
   return (
@@ -234,9 +276,20 @@ export default function ExpensesPage() {
               ) : (
                 filteredExpenses.map((expense) => (
                   <Card key={expense.id} className="p-4">
-                    <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <div className="font-medium">{expense.vendor.name}</div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="font-medium">{expense.vendor.name}</div>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              expense.status === "PAID"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                            }`}
+                          >
+                            {expense.status === "PAID" ? "Paid" : "Pending"}
+                          </span>
+                        </div>
                         <div className="text-sm text-muted-foreground">
                           {expense.store.name}
                         </div>
@@ -245,8 +298,11 @@ export default function ExpensesPage() {
                             {expense.description}
                           </div>
                         )}
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {format(new Date(expense.expenseDate), "MMM dd, yyyy")}
+                        </div>
                       </div>
-                      <div className="text-right">
+                      <div className="flex flex-col items-end gap-2">
                         <div
                           className={`text-lg font-bold ${
                             expense.currency === "EUR" ? "text-eur" : "text-gbp"
@@ -254,8 +310,28 @@ export default function ExpensesPage() {
                         >
                           {formatCurrency(expense.amount, expense.currency as any)}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {format(new Date(expense.expenseDate), "MMM dd, yyyy")}
+                        <div className="flex gap-1">
+                          {expense.status === "RAISED" ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMarkAsPaid(expense.id)}
+                              className="flex-shrink-0"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Mark Paid
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setConfirmUnpaidDialog(expense.id)}
+                              className="flex-shrink-0"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Mark Unpaid
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -327,6 +403,32 @@ export default function ExpensesPage() {
         vendor={selectedVendor}
         onDelete={handleDeleteVendor}
       />
+
+      {/* Confirmation Dialog for Marking as Unpaid */}
+      {confirmUnpaidDialog && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg shadow-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-2">Mark Expense as Unpaid?</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Are you sure you want to mark this expense as unpaid? This will change the status back to pending.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setConfirmUnpaidDialog(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => handleMarkAsUnpaid(confirmUnpaidDialog)}
+              >
+                Mark as Unpaid
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

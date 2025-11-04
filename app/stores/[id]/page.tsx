@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, TrendingUp, Receipt, Users, Edit, Plus, CheckCircle, Pencil } from "lucide-react";
+import { ArrowLeft, TrendingUp, Receipt, Users, Edit, Plus, CheckCircle, Pencil, XCircle, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,10 +11,13 @@ import { Store } from "@/lib/types/store";
 import { Sale } from "@/lib/types/sale";
 import { Expense } from "@/lib/types/expense";
 import { AttendanceWithRelations } from "@/lib/types/attendance";
+import { DeliveryWithRelations } from "@/lib/types/delivery";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency/utils";
 import { DateFilter, DateRange, DateFilterPreset } from "@/components/common/date-filter";
 import { StoreEmployeesDialog } from "@/components/stores/store-employees-dialog";
+import { StoreDriversDialog } from "@/components/stores/store-drivers-dialog";
 import { AttendanceDialog } from "@/components/attendance/attendance-dialog";
+import { DeliveryDialog } from "@/components/deliveries/delivery-dialog";
 import { SalesDialog } from "@/components/sales/sales-dialog";
 import { ExpensesDialog } from "@/components/expenses/expenses-dialog";
 import { toast } from "sonner";
@@ -29,14 +32,18 @@ export default function StoreDetailPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [attendance, setAttendance] = useState<AttendanceWithRelations[]>([]);
+  const [deliveries, setDeliveries] = useState<DeliveryWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [employeesDialogOpen, setEmployeesDialogOpen] = useState(false);
+  const [driversDialogOpen, setDriversDialogOpen] = useState(false);
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
+  const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
   const [salesDialogOpen, setSalesDialogOpen] = useState(false);
   const [expensesDialogOpen, setExpensesDialogOpen] = useState(false);
   const [saleToEdit, setSaleToEdit] = useState<Sale | null>(null);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
   const [employeesRefreshKey, setEmployeesRefreshKey] = useState(0);
+  const [confirmUnpaidDialog, setConfirmUnpaidDialog] = useState<string | null>(null);
 
   // Date filtering state
   const [datePreset, setDatePreset] = useState<DateFilterPreset>("week");
@@ -51,6 +58,7 @@ export default function StoreDetailPage() {
       fetchSales(),
       fetchExpenses(),
       fetchAttendance(),
+      fetchDeliveries(),
     ]).finally(() => setLoading(false));
   }, [storeId, dateRange]);
 
@@ -123,6 +131,25 @@ export default function StoreDetailPage() {
     }
   };
 
+  const fetchDeliveries = async () => {
+    try {
+      const response = await fetch(`/api/deliveries?storeId=${storeId}`);
+      if (!response.ok) throw new Error("Failed to fetch deliveries");
+      const data = await response.json();
+
+      // Filter by date range
+      const filtered = data.filter((delivery: DeliveryWithRelations) => {
+        const deliveryDate = new Date(delivery.deliveryDate);
+        return deliveryDate >= dateRange.from && deliveryDate <= dateRange.to;
+      });
+
+      setDeliveries(filtered);
+    } catch (error) {
+      console.error("Error fetching deliveries:", error);
+      toast.error("Failed to load deliveries");
+    }
+  };
+
   // Calculate totals by currency
   const salesTotals = sales.reduce((acc, sale) => {
     if (!acc[sale.currency]) acc[sale.currency] = 0;
@@ -152,6 +179,15 @@ export default function StoreDetailPage() {
     return acc;
   }, {} as Record<string, { amount: number; hours: number }>);
 
+  const deliveriesTotals = deliveries.reduce((acc, delivery) => {
+    if (!acc[delivery.currency]) {
+      acc[delivery.currency] = { expenseAmount: 0, count: 0 };
+    }
+    acc[delivery.currency].expenseAmount += delivery.expenseAmount;
+    acc[delivery.currency].count += delivery.numberOfDeliveries;
+    return acc;
+  }, {} as Record<string, { expenseAmount: number; count: number }>);
+
   const handleEdit = () => {
     router.push(`/stores?edit=${storeId}`);
   };
@@ -173,6 +209,27 @@ export default function StoreDetailPage() {
     } catch (error) {
       console.error("Error marking expense as paid:", error);
       toast.error("Failed to mark expense as paid");
+    }
+  };
+
+  const handleMarkAsUnpaid = async (expenseId: string) => {
+    try {
+      const response = await fetch(`/api/expenses/${expenseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "RAISED" }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to mark expense as unpaid");
+      }
+
+      toast.success("Expense marked as unpaid");
+      fetchExpenses();
+      setConfirmUnpaidDialog(null);
+    } catch (error) {
+      console.error("Error marking expense as unpaid:", error);
+      toast.error("Failed to mark expense as unpaid");
     }
   };
 
@@ -279,7 +336,7 @@ export default function StoreDetailPage() {
         <div className="flex-1 overflow-auto">
           <Tabs defaultValue="sales" className="h-full">
             <div className="sticky top-0 z-10 bg-background border-b px-4">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="sales">
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Sales
@@ -287,6 +344,10 @@ export default function StoreDetailPage() {
                 <TabsTrigger value="expenses">
                   <Receipt className="h-4 w-4 mr-2" />
                   Expenses
+                </TabsTrigger>
+                <TabsTrigger value="drivers">
+                  <Truck className="h-4 w-4 mr-2" />
+                  Drivers
                 </TabsTrigger>
                 <TabsTrigger value="staff">
                   <Users className="h-4 w-4 mr-2" />
@@ -469,7 +530,7 @@ export default function StoreDetailPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        {expense.status === "RAISED" && (
+                        {expense.status === "RAISED" ? (
                           <Button
                             size="sm"
                             variant="outline"
@@ -479,7 +540,107 @@ export default function StoreDetailPage() {
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Mark Paid
                           </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setConfirmUnpaidDialog(expense.id)}
+                            className="flex-shrink-0"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Mark Unpaid
+                          </Button>
                         )}
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
+
+            {/* Drivers Tab */}
+            <TabsContent value="drivers" className="p-4 space-y-4 mt-0">
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setDriversDialogOpen(true)}
+                  className="flex-1"
+                  variant="outline"
+                >
+                  <Truck className="h-4 w-4 mr-2" />
+                  Manage Drivers
+                </Button>
+                <Button
+                  onClick={() => setDeliveryDialogOpen(true)}
+                  className="flex-1"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Record Delivery
+                </Button>
+              </div>
+
+              {/* Delivery Totals */}
+              {Object.keys(deliveriesTotals).length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  {Object.entries(deliveriesTotals).map(([currency, data]) => (
+                    <div
+                      key={currency}
+                      className={`px-3 py-2 rounded-lg ${
+                        currency === "EUR" ? "bg-eur/10" : "bg-gbp/10"
+                      }`}
+                    >
+                      <div className="text-xs font-medium text-muted-foreground">
+                        Total Expenses ({currency})
+                      </div>
+                      <div
+                        className={`text-lg font-bold ${
+                          currency === "EUR" ? "text-eur" : "text-gbp"
+                        }`}
+                      >
+                        {formatCurrency(data.expenseAmount, currency as any)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {data.count} deliveries
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {deliveries.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-center">
+                  <Truck className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No delivery records</h3>
+                  <p className="text-sm text-muted-foreground">
+                    No deliveries found for the selected period
+                  </p>
+                </div>
+              ) : (
+                deliveries.map((delivery) => (
+                  <Card key={delivery.id} className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <div className="font-medium">{delivery.driver.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {format(new Date(delivery.deliveryDate), "MMM dd, yyyy")}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {delivery.numberOfDeliveries} deliveries
+                        </div>
+                        {delivery.notes && (
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {delivery.notes}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div
+                          className={`text-lg font-bold ${
+                            delivery.currency === "EUR" ? "text-eur" : "text-gbp"
+                          }`}
+                        >
+                          {formatCurrency(delivery.expenseAmount, delivery.currency as any)}
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -592,6 +753,17 @@ export default function StoreDetailPage() {
         />
       )}
 
+      {/* Store Drivers Dialog */}
+      {store && (
+        <StoreDriversDialog
+          open={driversDialogOpen}
+          onClose={() => setDriversDialogOpen(false)}
+          onSuccess={() => fetchDeliveries()}
+          storeId={storeId}
+          storeName={store.name}
+        />
+      )}
+
       {/* Attendance Dialog */}
       {store && (
         <AttendanceDialog
@@ -601,6 +773,20 @@ export default function StoreDetailPage() {
           onSuccess={() => {
             fetchAttendance();
             setAttendanceDialogOpen(false);
+          }}
+          stores={[store]}
+          storeId={storeId}
+        />
+      )}
+
+      {/* Delivery Dialog */}
+      {store && (
+        <DeliveryDialog
+          open={deliveryDialogOpen}
+          onClose={() => setDeliveryDialogOpen(false)}
+          onSuccess={() => {
+            fetchDeliveries();
+            setDeliveryDialogOpen(false);
           }}
           stores={[store]}
           storeId={storeId}
@@ -635,6 +821,32 @@ export default function StoreDetailPage() {
           storeId={storeId}
           expenseToEdit={expenseToEdit}
         />
+      )}
+
+      {/* Confirmation Dialog for Marking as Unpaid */}
+      {confirmUnpaidDialog && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg shadow-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-2">Mark Expense as Unpaid?</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Are you sure you want to mark this expense as unpaid? This will change the status back to pending.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setConfirmUnpaidDialog(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => handleMarkAsUnpaid(confirmUnpaidDialog)}
+              >
+                Mark as Unpaid
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </AppLayout>
   );

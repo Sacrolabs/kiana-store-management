@@ -7,13 +7,13 @@ import { AuthProvider } from "@/lib/auth/context";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Store Management",
-  description: "Mobile-first store management PWA",
+  title: "Kiana Store Management",
+  description: "Mobile-first store management App",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Store Management",
+    title: "Kiana Store Management",
   },
 };
 

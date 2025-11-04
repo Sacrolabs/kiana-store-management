@@ -45,17 +45,19 @@ export default function ReportsPage() {
       setLoading(true);
 
       // Fetch all data
-      const [salesRes, storesRes, attendanceRes, expensesRes] = await Promise.all([
+      const [salesRes, storesRes, attendanceRes, expensesRes, deliveriesRes] = await Promise.all([
         fetch("/api/sales"),
         fetch("/api/stores"),
         fetch("/api/attendance"),
         fetch("/api/expenses"),
+        fetch("/api/deliveries"),
       ]);
 
       const salesData = await salesRes.json();
       const storesData = await storesRes.json();
       const attendanceData = await attendanceRes.json();
       const expensesData = await expensesRes.json();
+      const deliveriesData = await deliveriesRes.json();
 
       // Store stores in state for filter - ensure it's always an array
       setStores(Array.isArray(storesData) ? storesData : []);
@@ -64,6 +66,7 @@ export default function ReportsPage() {
       const safeSalesData = Array.isArray(salesData) ? salesData : [];
       const safeAttendanceData = Array.isArray(attendanceData) ? attendanceData : [];
       const safeExpensesData = Array.isArray(expensesData) ? expensesData : [];
+      const safeDeliveriesData = Array.isArray(deliveriesData) ? deliveriesData : [];
 
       // Filter data by date range and store
       const sales = safeSalesData.filter((sale: any) => {
@@ -84,6 +87,13 @@ export default function ReportsPage() {
         const expenseDate = new Date(expense.expenseDate);
         const dateMatch = expenseDate >= dateRange.from && expenseDate <= dateRange.to;
         const storeMatch = selectedStoreId === "all" || expense.storeId === selectedStoreId;
+        return dateMatch && storeMatch;
+      });
+
+      const deliveries = safeDeliveriesData.filter((delivery: any) => {
+        const deliveryDate = new Date(delivery.deliveryDate);
+        const dateMatch = deliveryDate >= dateRange.from && deliveryDate <= dateRange.to;
+        const storeMatch = selectedStoreId === "all" || delivery.storeId === selectedStoreId;
         return dateMatch && storeMatch;
       });
 
@@ -125,19 +135,27 @@ export default function ReportsPage() {
         return acc;
       }, {});
 
-      // Calculate profit (sales - expenses - payroll)
+      const totalDeliveryExpenses = deliveries.reduce((acc: any, delivery: any) => {
+        if (!acc[delivery.currency]) acc[delivery.currency] = 0;
+        acc[delivery.currency] += delivery.expenseAmount;
+        return acc;
+      }, {});
+
+      // Calculate profit (sales - expenses - payroll - delivery expenses)
       const profit: any = {};
       const allCurrencies = new Set([
         ...Object.keys(totalSales),
         ...Object.keys(totalExpenses),
         ...Object.keys(totalPayroll),
+        ...Object.keys(totalDeliveryExpenses),
       ]);
 
       allCurrencies.forEach((currency) => {
         const salesAmount = totalSales[currency] || 0;
         const expensesAmount = totalExpenses[currency]?.total || 0;
         const payrollAmount = totalPayroll[currency] || 0;
-        profit[currency] = salesAmount - expensesAmount - payrollAmount;
+        const deliveryExpensesAmount = totalDeliveryExpenses[currency] || 0;
+        profit[currency] = salesAmount - expensesAmount - payrollAmount - deliveryExpensesAmount;
       });
 
       setStats({
@@ -145,12 +163,14 @@ export default function ReportsPage() {
         totalSales,
         totalPayroll,
         totalExpenses,
+        totalDeliveryExpenses,
         profit,
         totalHours,
         salesByStore,
         salesCount: sales.length,
         attendanceCount: attendance.length,
         expensesCount: expenses.length,
+        deliveriesCount: deliveries.length,
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -390,6 +410,33 @@ export default function ReportsPage() {
             </Card>
           )}
 
+          {/* Delivery Expenses */}
+          {stats?.totalDeliveryExpenses && Object.keys(stats.totalDeliveryExpenses).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Delivery Expenses</CardTitle>
+                <CardDescription>Driver delivery costs by currency</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Object.entries(stats.totalDeliveryExpenses).map(([currency, amount]: [string, any]) => (
+                  <div key={currency} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        currency === "EUR" ? "bg-eur" : "bg-gbp"
+                      }`} />
+                      <span className="font-medium">{currency}</span>
+                    </div>
+                    <div className={`text-lg font-bold ${
+                      currency === "EUR" ? "text-eur" : "text-gbp"
+                    }`}>
+                      {formatCurrency(amount, currency as any)}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Profit Calculation */}
           {stats?.profit && Object.keys(stats.profit).length > 0 && (
             <Card className="border-2">
@@ -423,6 +470,12 @@ export default function ReportsPage() {
                         <span className="text-muted-foreground">Labour Payments</span>
                         <span className="font-medium text-red-600">
                           - {formatCurrency(stats.totalPayroll[currency] || 0, currency as any)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Delivery Expenses</span>
+                        <span className="font-medium text-red-600">
+                          - {formatCurrency(stats.totalDeliveryExpenses[currency] || 0, currency as any)}
                         </span>
                       </div>
                       <div className="border-t pt-2 mt-2">
