@@ -34,7 +34,7 @@ export function formatCurrency(
   showSymbol: boolean = true
 ): string {
   const amount = fromMinorUnits(minorUnits);
-  const locale = currency === "EUR" ? "de-DE" : "en-GB";
+  const locale = "en-US"; // US format: 1,234.56 for both EUR and GBP
   const currencyCode = currency;
 
   if (!showSymbol) {

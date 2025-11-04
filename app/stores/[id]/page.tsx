@@ -327,7 +327,6 @@ export default function StoreDetailPage() {
               onChange={setDateRange}
               preset={datePreset}
               onPresetChange={setDatePreset}
-              limitedPresets={true}
             />
           </div>
         </div>
