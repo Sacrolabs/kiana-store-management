@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client/runtime/library";
+import { Prisma } from "@/lib/generated/prisma";
 
 export interface ErrorResponse {
   status: number;
