@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma/client";
 import { Currency } from "@/lib/generated/prisma";
 import { startOfDay, endOfDay } from "date-fns";
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // GET /api/sales/check?storeId=xxx&currency=EUR&date=2025-10-30
 // Check if a sale exists for the given store, currency, and date
 export async function GET(request: NextRequest) {
