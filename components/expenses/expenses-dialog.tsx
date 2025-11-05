@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Receipt } from "lucide-react";
+import { Receipt, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,6 +34,7 @@ interface ExpensesDialogProps {
   stores: Store[];
   storeId?: string; // Optional: pre-select a store
   expenseToEdit?: any; // Optional: existing expense to edit
+  onDelete?: (id: string) => void; // Optional: delete callback
 }
 
 export function ExpensesDialog({
@@ -43,6 +44,7 @@ export function ExpensesDialog({
   stores,
   storeId,
   expenseToEdit,
+  onDelete,
 }: ExpensesDialogProps) {
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -178,6 +180,13 @@ export function ExpensesDialog({
     setEditMode(false);
     setExpenseId(null);
     onClose();
+  };
+
+  const handleDelete = () => {
+    if (expenseToEdit && expenseId && onDelete) {
+      onDelete(expenseId);
+      handleClose();
+    }
   };
 
   const selectedStore = stores.find((s) => s.id === selectedStoreId);
@@ -339,6 +348,18 @@ export function ExpensesDialog({
 
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-4">
+            {editMode && expenseToEdit && onDelete && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={handleDelete}
+                disabled={saving}
+                className="mr-auto"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"

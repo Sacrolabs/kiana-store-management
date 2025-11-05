@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DollarSign } from "lucide-react";
+import { DollarSign, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,7 @@ interface SalesDialogProps {
   stores: Store[];
   storeId?: string; // Optional: pre-select a store
   saleToEdit?: any; // Optional: existing sale to edit
+  onDelete?: (id: string) => void; // Optional: delete callback
 }
 
 export function SalesDialog({
@@ -43,6 +44,7 @@ export function SalesDialog({
   stores,
   storeId,
   saleToEdit,
+  onDelete,
 }: SalesDialogProps) {
   const [saving, setSaving] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -215,6 +217,13 @@ export function SalesDialog({
     onClose();
   };
 
+  const handleDelete = () => {
+    if (saleToEdit && saleId && onDelete) {
+      onDelete(saleId);
+      handleClose();
+    }
+  };
+
   const selectedStore = stores.find((s) => s.id === selectedStoreId);
   const total = calculateTotal();
 
@@ -367,25 +376,38 @@ export function SalesDialog({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving || total === 0 || checking}>
-              <DollarSign className="h-4 w-4 mr-2" />
-              {saving
-                ? editMode
-                  ? "Updating..."
-                  : "Recording..."
-                : editMode
-                ? "Update Sale"
-                : "Record Sale"}
-            </Button>
+          <div className="flex justify-between gap-2 pt-4">
+            {editMode && saleToEdit && onDelete && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={handleDelete}
+                disabled={saving}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            <div className={`flex gap-2 ${!(editMode && saleToEdit && onDelete) ? 'ml-auto' : ''}`}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saving || total === 0 || checking}>
+                <DollarSign className="h-4 w-4 mr-2" />
+                {saving
+                  ? editMode
+                    ? "Updating..."
+                    : "Recording..."
+                  : editMode
+                  ? "Update Sale"
+                  : "Record Sale"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
