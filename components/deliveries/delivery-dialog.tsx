@@ -34,6 +34,7 @@ interface DeliveryDialogProps {
   onSuccess: () => void;
   stores: Store[];
   storeId?: string; // Optional: pre-select a store
+  deliveryToEdit?: any; // Optional: existing delivery to edit
 }
 
 export function DeliveryDialog({
@@ -42,10 +43,13 @@ export function DeliveryDialog({
   onSuccess,
   stores,
   storeId,
+  deliveryToEdit,
 }: DeliveryDialogProps) {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [storeDrivers, setStoreDrivers] = useState<Driver[]>([]);
   const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [deliveryId, setDeliveryId] = useState<string | null>(null);
 
   // Form state
   const [selectedStoreId, setSelectedStoreId] = useState(storeId || "");
@@ -79,6 +83,24 @@ export function DeliveryDialog({
       }
     }
   }, [selectedStoreId, stores, storeId]);
+
+  // Load existing delivery data when editing
+  useEffect(() => {
+    if (deliveryToEdit && open) {
+      setEditMode(true);
+      setDeliveryId(deliveryToEdit.id);
+      setSelectedStoreId(deliveryToEdit.storeId);
+      setSelectedDriverId(deliveryToEdit.driverId);
+      setDeliveryDate(format(new Date(deliveryToEdit.deliveryDate), "yyyy-MM-dd"));
+      setNumberOfDeliveries(String(deliveryToEdit.numberOfDeliveries));
+      setSelectedCurrency(deliveryToEdit.currency as Currency);
+      setExpenseAmount(deliveryToEdit.expenseAmount);
+      setNotes(deliveryToEdit.notes || "");
+    } else if (open && !deliveryToEdit) {
+      setEditMode(false);
+      setDeliveryId(null);
+    }
+  }, [deliveryToEdit, open]);
 
   const fetchDrivers = async () => {
     try {
@@ -130,8 +152,11 @@ export function DeliveryDialog({
 
     setSaving(true);
     try {
-      const response = await fetch("/api/deliveries", {
-        method: "POST",
+      const url = editMode && deliveryId ? `/api/deliveries/${deliveryId}` : "/api/deliveries";
+      const method = editMode && deliveryId ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           driverId: selectedDriverId,
@@ -146,15 +171,15 @@ export function DeliveryDialog({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to record delivery");
+        throw new Error(error.error || `Failed to ${editMode ? "update" : "record"} delivery`);
       }
 
-      toast.success("Delivery recorded successfully");
+      toast.success(`Delivery ${editMode ? "updated" : "recorded"} successfully`);
       onSuccess();
       handleClose();
     } catch (error: any) {
-      console.error("Error recording delivery:", error);
-      toast.error(error.message || "Failed to record delivery");
+      console.error(`Error ${editMode ? "updating" : "recording"} delivery:`, error);
+      toast.error(error.message || `Failed to ${editMode ? "update" : "record"} delivery`);
     } finally {
       setSaving(false);
     }
@@ -168,6 +193,8 @@ export function DeliveryDialog({
     setSelectedCurrency("EUR");
     setExpenseAmount(0);
     setNotes("");
+    setEditMode(false);
+    setDeliveryId(null);
     onClose();
   };
 
@@ -178,9 +205,9 @@ export function DeliveryDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle>Record Delivery</DialogTitle>
+          <DialogTitle>{editMode ? "Edit Delivery" : "Record Delivery"}</DialogTitle>
           <DialogDescription>
-            Record driver deliveries and expenses
+            {editMode ? "Update delivery details" : "Record driver deliveries and expenses"}
           </DialogDescription>
         </DialogHeader>
 
@@ -329,7 +356,9 @@ export function DeliveryDialog({
             </Button>
             <Button type="submit" disabled={saving}>
               <Truck className="h-4 w-4 mr-2" />
-              {saving ? "Recording..." : "Record Delivery"}
+              {saving 
+                ? editMode ? "Updating..." : "Recording..." 
+                : editMode ? "Update Delivery" : "Record Delivery"}
             </Button>
           </div>
         </form>

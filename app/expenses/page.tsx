@@ -14,6 +14,7 @@ import { DateFilter, DateRange, DateFilterPreset } from "@/components/common/dat
 import { toast } from "sonner";
 import { format, startOfDay, endOfDay, startOfWeek } from "date-fns";
 import { VendorDialog } from "@/components/vendors/vendor-dialog";
+import { ExpensesDialog } from "@/components/expenses/expenses-dialog";
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<ExpenseWithRelations[]>([]);
@@ -23,6 +24,8 @@ export default function ExpensesPage() {
   const [vendorDialogOpen, setVendorDialogOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<VendorWithExpenseCount | null>(null);
   const [confirmUnpaidDialog, setConfirmUnpaidDialog] = useState<string | null>(null);
+  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseWithRelations | null>(null);
 
   // Date filtering state
   const [datePreset, setDatePreset] = useState<DateFilterPreset>("week");
@@ -123,6 +126,42 @@ export default function ExpensesPage() {
 
   const handleVendorSuccess = () => {
     fetchVendors();
+  };
+
+  const handleAddExpense = () => {
+    setSelectedExpense(null);
+    setExpenseDialogOpen(true);
+  };
+
+  const handleEditExpense = (expense: ExpenseWithRelations) => {
+    setSelectedExpense(expense);
+    setExpenseDialogOpen(true);
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this expense?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/expenses/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete expense");
+
+      toast.success("Expense deleted successfully");
+      fetchExpenses();
+      setExpenseDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      toast.error("Failed to delete expense");
+    }
+  };
+
+  const handleExpenseSuccess = () => {
+    fetchExpenses();
+    setExpenseDialogOpen(false);
   };
 
   const handleMarkAsPaid = async (expenseId: string) => {
@@ -231,6 +270,14 @@ export default function ExpensesPage() {
             </div>
 
             <TabsContent value="expenses" className="p-4 space-y-4 mt-0">
+              {/* Add Expense Button */}
+              {stores.length > 0 && vendors.length > 0 && (
+                <Button onClick={handleAddExpense} className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Expense
+                </Button>
+              )}
+
               {loading ? (
                 <div className="flex items-center justify-center h-64">
                   <div className="text-muted-foreground">Loading...</div>
@@ -274,7 +321,11 @@ export default function ExpensesPage() {
                 </div>
               ) : (
                 filteredExpenses.map((expense) => (
-                  <Card key={expense.id} className="p-4">
+                  <Card 
+                    key={expense.id} 
+                    className="p-4 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleEditExpense(expense)}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -401,6 +452,15 @@ export default function ExpensesPage() {
         onSuccess={handleVendorSuccess}
         vendor={selectedVendor}
         onDelete={handleDeleteVendor}
+      />
+
+      <ExpensesDialog
+        open={expenseDialogOpen}
+        onClose={() => setExpenseDialogOpen(false)}
+        onSuccess={handleExpenseSuccess}
+        stores={stores}
+        expenseToEdit={selectedExpense}
+        onDelete={handleDeleteExpense}
       />
 
       {/* Confirmation Dialog for Marking as Unpaid */}

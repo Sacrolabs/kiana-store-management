@@ -42,6 +42,7 @@ export default function StoreDetailPage() {
   const [expensesDialogOpen, setExpensesDialogOpen] = useState(false);
   const [saleToEdit, setSaleToEdit] = useState<Sale | null>(null);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
+  const [deliveryToEdit, setDeliveryToEdit] = useState<DeliveryWithRelations | null>(null);
   const [employeesRefreshKey, setEmployeesRefreshKey] = useState(0);
   const [confirmUnpaidDialog, setConfirmUnpaidDialog] = useState<string | null>(null);
 
@@ -238,9 +239,51 @@ export default function StoreDetailPage() {
     setSalesDialogOpen(true);
   };
 
+  const handleDeleteSale = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this sale?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/sales/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete sale");
+
+      toast.success("Sale deleted successfully");
+      fetchSales();
+      handleCloseSalesDialog();
+    } catch (error) {
+      console.error("Error deleting sale:", error);
+      toast.error("Failed to delete sale");
+    }
+  };
+
   const handleEditExpense = (expense: Expense) => {
     setExpenseToEdit(expense);
     setExpensesDialogOpen(true);
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this expense?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/expenses/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete expense");
+
+      toast.success("Expense deleted successfully");
+      fetchExpenses();
+      handleCloseExpensesDialog();
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      toast.error("Failed to delete expense");
+    }
   };
 
   const handleCloseSalesDialog = () => {
@@ -251,6 +294,16 @@ export default function StoreDetailPage() {
   const handleCloseExpensesDialog = () => {
     setExpensesDialogOpen(false);
     setExpenseToEdit(null);
+  };
+
+  const handleEditDelivery = (delivery: DeliveryWithRelations) => {
+    setDeliveryToEdit(delivery);
+    setDeliveryDialogOpen(true);
+  };
+
+  const handleCloseDeliveryDialog = () => {
+    setDeliveryDialogOpen(false);
+    setDeliveryToEdit(null);
   };
 
   if (loading) {
@@ -495,8 +548,8 @@ export default function StoreDetailPage() {
                   <Card key={expense.id} className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className="font-medium">{expense.description}</div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="font-medium">{(expense as any).vendor?.name || "Unknown Vendor"}</div>
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                               expense.status === "PAID"
@@ -507,6 +560,11 @@ export default function StoreDetailPage() {
                             {expense.status === "PAID" ? "Paid" : "Pending"}
                           </span>
                         </div>
+                        {expense.description && (
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {expense.description}
+                          </div>
+                        )}
                         <div className="text-sm text-muted-foreground">
                           {format(new Date(expense.expenseDate), "MMM dd, yyyy")}
                         </div>
@@ -616,7 +674,11 @@ export default function StoreDetailPage() {
                 </div>
               ) : (
                 deliveries.map((delivery) => (
-                  <Card key={delivery.id} className="p-4">
+                  <Card 
+                    key={delivery.id} 
+                    className="p-4 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleEditDelivery(delivery)}
+                  >
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="font-medium">{delivery.driver.name}</div>
@@ -782,13 +844,14 @@ export default function StoreDetailPage() {
       {store && (
         <DeliveryDialog
           open={deliveryDialogOpen}
-          onClose={() => setDeliveryDialogOpen(false)}
+          onClose={handleCloseDeliveryDialog}
           onSuccess={() => {
             fetchDeliveries();
-            setDeliveryDialogOpen(false);
+            handleCloseDeliveryDialog();
           }}
           stores={[store]}
           storeId={storeId}
+          deliveryToEdit={deliveryToEdit}
         />
       )}
 
@@ -804,6 +867,7 @@ export default function StoreDetailPage() {
           stores={[store]}
           storeId={storeId}
           saleToEdit={saleToEdit}
+          onDelete={handleDeleteSale}
         />
       )}
 
@@ -819,6 +883,7 @@ export default function StoreDetailPage() {
           stores={[store]}
           storeId={storeId}
           expenseToEdit={expenseToEdit}
+          onDelete={handleDeleteExpense}
         />
       )}
 
