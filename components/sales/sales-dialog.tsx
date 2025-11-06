@@ -182,7 +182,7 @@ export function SalesDialog({
           justEat,
           mylocal,
           creditCard,
-          notes: notes.trim() || undefined,
+          notes: notes.trim(),
         }),
       });
 

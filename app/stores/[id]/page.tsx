@@ -43,6 +43,7 @@ export default function StoreDetailPage() {
   const [saleToEdit, setSaleToEdit] = useState<Sale | null>(null);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
   const [deliveryToEdit, setDeliveryToEdit] = useState<DeliveryWithRelations | null>(null);
+  const [attendanceToEdit, setAttendanceToEdit] = useState<AttendanceWithRelations | null>(null);
   const [employeesRefreshKey, setEmployeesRefreshKey] = useState(0);
   const [confirmUnpaidDialog, setConfirmUnpaidDialog] = useState<string | null>(null);
 
@@ -176,7 +177,9 @@ export default function StoreDetailPage() {
       acc[record.currency] = { amount: 0, hours: 0 };
     }
     acc[record.currency].amount += record.amountToPay;
-    acc[record.currency].hours += parseFloat(record.hoursWorked.toString());
+    // Round to 2 decimal places to avoid floating-point precision issues
+    const hours = Math.round(parseFloat(record.hoursWorked.toString()) * 100) / 100;
+    acc[record.currency].hours += hours;
     return acc;
   }, {} as Record<string, { amount: number; hours: number }>);
 
@@ -304,6 +307,46 @@ export default function StoreDetailPage() {
   const handleCloseDeliveryDialog = () => {
     setDeliveryDialogOpen(false);
     setDeliveryToEdit(null);
+  };
+
+  const handleEditAttendance = (attendance: AttendanceWithRelations) => {
+    setAttendanceToEdit(attendance);
+    setAttendanceDialogOpen(true);
+  };
+
+  const handleDeleteAttendance = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this attendance record?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/attendance/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete attendance");
+
+      toast.success("Attendance record deleted successfully");
+      fetchAttendance();
+      handleCloseAttendanceDialog();
+    } catch (error) {
+      console.error("Error deleting attendance:", error);
+      toast.error("Failed to delete attendance");
+    }
+  };
+
+  const handleCloseAttendanceDialog = () => {
+    setAttendanceDialogOpen(false);
+    setAttendanceToEdit(null);
+  };
+
+  // Helper function to format hours display
+  const formatHours = (hours: number | string | any): string => {
+    const numHours = typeof hours === 'string' ? parseFloat(hours) : typeof hours === 'number' ? hours : parseFloat(hours.toString());
+    // Round to 2 decimal places
+    const rounded = Math.round(numHours * 100) / 100;
+    // If it's a whole number, show without decimals
+    return rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(2);
   };
 
   if (loading) {
@@ -751,7 +794,7 @@ export default function StoreDetailPage() {
                         {formatCurrency(data.amount, currency as any)}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {data.hours.toFixed(2)} hours
+                        {formatHours(data.hours)} hours
                       </div>
                     </div>
                   ))}
@@ -768,7 +811,11 @@ export default function StoreDetailPage() {
                 </div>
               ) : (
                 attendance.map((record) => (
-                  <Card key={record.id} className="p-4">
+                  <Card 
+                    key={record.id} 
+                    className="p-4 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleEditAttendance(record)}
+                  >
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="font-medium">{record.employee.name}</div>
@@ -786,7 +833,7 @@ export default function StoreDetailPage() {
                           {formatCurrency(record.amountToPay, record.currency as any)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {record.hoursWorked.toString()} hours
+                          {formatHours(record.hoursWorked)} hours
                         </div>
                       </div>
                     </div>
@@ -830,13 +877,15 @@ export default function StoreDetailPage() {
         <AttendanceDialog
           key={`attendance-${employeesRefreshKey}`}
           open={attendanceDialogOpen}
-          onClose={() => setAttendanceDialogOpen(false)}
+          onClose={handleCloseAttendanceDialog}
           onSuccess={() => {
             fetchAttendance();
-            setAttendanceDialogOpen(false);
+            handleCloseAttendanceDialog();
           }}
           stores={[store]}
           storeId={storeId}
+          attendanceToEdit={attendanceToEdit}
+          onDelete={handleDeleteAttendance}
         />
       )}
 

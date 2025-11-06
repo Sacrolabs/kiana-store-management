@@ -149,7 +149,7 @@ export function ExpensesDialog({
           currency: selectedCurrency,
           expenseDate: new Date(expenseDate).toISOString(),
           amount,
-          description: description.trim() || undefined,
+          description: description.trim(),
           ...(editMode && { status }),
         }),
       });

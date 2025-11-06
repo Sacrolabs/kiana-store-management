@@ -165,7 +165,7 @@ export function DeliveryDialog({
           numberOfDeliveries: parseInt(numberOfDeliveries),
           currency: selectedCurrency,
           expenseAmount, // Already in cents/pence from CurrencyInput
-          notes: notes.trim() || undefined,
+          notes: notes.trim(),
         }),
       });
 

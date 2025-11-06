@@ -136,14 +136,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get hourly rate for the currency
-    const hourlyRate = currency === "EUR" ? employee.hourlyRateEur : employee.hourlyRateGbp;
-
-    if (!hourlyRate) {
-      return NextResponse.json(
-        { error: `Employee does not have hourly rate set for ${currency}` },
-        { status: 400 }
-      );
+    // Validate wage/rate based on employee wage type
+    const wageType = (employee as any).wageType || "HOURLY";
+    
+    let hourlyRate;
+    let dailyWage;
+    
+    if (wageType === "HOURLY") {
+      // Check hourly rate for hourly employees
+      hourlyRate = currency === "EUR" ? employee.hourlyRateEur : employee.hourlyRateGbp;
+      if (!hourlyRate) {
+        return NextResponse.json(
+          { error: `Employee does not have hourly rate set for ${currency}` },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Check daily wage for fixed wage employees
+      dailyWage = currency === "EUR" ? (employee as any).weeklyWageEur : (employee as any).weeklyWageGbp;
+      if (!dailyWage) {
+        return NextResponse.json(
+          { error: `Employee does not have daily wage set for ${currency}` },
+          { status: 400 }
+        );
+      }
     }
 
     const checkInDate = new Date(checkIn);
@@ -160,10 +176,20 @@ export async function POST(request: NextRequest) {
     // Calculate hours worked
     const hoursWorked = calculateHours(checkInDate, checkOutDate);
 
-    // Calculate payment (convert to minor units - cents/pence)
-    const hourlyRateNumber = parseFloat(hourlyRate.toString());
-    const paymentDecimal = hoursWorked * hourlyRateNumber;
-    const amountToPay = Math.round(paymentDecimal * 100); // Convert to cents/pence
+    // Calculate payment based on wage type (convert to minor units - cents/pence)
+    let amountToPay;
+    
+    if (wageType === "FIXED") {
+      // Fixed daily wage - count full days worked
+      const dailyWageNumber = parseFloat(dailyWage!.toString());
+      const days = Math.max(1, Math.ceil(hoursWorked / 24));
+      amountToPay = Math.round(dailyWageNumber * days * 100); // Convert to cents/pence
+    } else {
+      // Hourly rate
+      const hourlyRateNumber = parseFloat(hourlyRate!.toString());
+      const paymentDecimal = hoursWorked * hourlyRateNumber;
+      amountToPay = Math.round(paymentDecimal * 100); // Convert to cents/pence
+    }
 
     const attendance = await prisma.attendance.create({
       data: {
