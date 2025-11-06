@@ -135,12 +135,29 @@ export function AttendanceDialog({
     const employee = employees.find((e) => e.id === selectedEmployeeId);
     if (!employee) return 0;
 
-    const rate =
-      selectedCurrency === "EUR"
-        ? Number(employee.hourlyRateEur || 0)
-        : Number(employee.hourlyRateGbp || 0);
+    const employeeAny = employee as any;
+    const wageType = employeeAny.wageType || "HOURLY";
 
-    return Math.round(hours * rate * 100); // Convert to cents/pence
+    if (wageType === "FIXED") {
+      // Fixed daily wage - count full days worked
+      const dailyWage =
+        selectedCurrency === "EUR"
+          ? Number(employeeAny.weeklyWageEur || 0)
+          : Number(employeeAny.weeklyWageGbp || 0);
+      
+      // Count number of days: minimum 1 day if any hours worked
+      // For standard work: 1-8 hours = 1 day, 9-16 hours = 2 days, etc.
+      const days = Math.max(1, Math.ceil(hours / 24));
+      return Math.round(dailyWage * days * 100); // Convert to cents/pence
+    } else {
+      // Hourly rate
+      const rate =
+        selectedCurrency === "EUR"
+          ? Number(employee.hourlyRateEur || 0)
+          : Number(employee.hourlyRateGbp || 0);
+
+      return Math.round(hours * rate * 100); // Convert to cents/pence
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -365,23 +382,45 @@ export function AttendanceDialog({
                 <span className="font-medium">{hours.toFixed(2)}</span>
               </div>
               {selectedEmployee && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Hourly Rate:</span>
-                  <span className="font-medium">
-                    {selectedCurrency === "EUR"
-                      ? `€${selectedEmployee.hourlyRateEur || 0}`
-                      : `£${selectedEmployee.hourlyRateGbp || 0}`}
-                    /hr
-                  </span>
-                </div>
+                <>
+                  {((selectedEmployee as any).wageType || "HOURLY") === "HOURLY" ? (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Hourly Rate:</span>
+                        <span className="font-medium">
+                          {selectedCurrency === "EUR"
+                            ? `€${selectedEmployee.hourlyRateEur || 0}`
+                            : `£${selectedEmployee.hourlyRateGbp || 0}`}
+                          /hr
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm pt-1 border-t">
+                        <span className="font-medium">Total Amount:</span>
+                        <span className="font-bold">
+                          {selectedCurrency === "EUR" ? "€" : "£"}
+                          {(amount / 100).toFixed(2)}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Days Worked:</span>
+                        <span className="font-medium">{Math.max(1, Math.ceil(hours / 24))}</span>
+                      </div>
+                      <div className="flex justify-between text-sm pt-1 border-t">
+                        <span className="font-medium">Daily Wage:</span>
+                        <span className="font-bold">
+                          {selectedCurrency === "EUR"
+                            ? `€${(selectedEmployee as any).weeklyWageEur || 0}`
+                            : `£${(selectedEmployee as any).weeklyWageGbp || 0}`}
+                          /day
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </>
               )}
-              <div className="flex justify-between text-sm pt-1 border-t">
-                <span className="font-medium">Total Amount:</span>
-                <span className="font-bold">
-                  {selectedCurrency === "EUR" ? "€" : "£"}
-                  {(amount / 100).toFixed(2)}
-                </span>
-              </div>
             </div>
           )}
 

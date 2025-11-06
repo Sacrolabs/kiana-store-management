@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Employee } from "@/lib/types/employee";
 import { toast } from "sonner";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface EmployeeDialogProps {
   open: boolean;
@@ -35,8 +36,11 @@ export function EmployeeDialog({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [wageType, setWageType] = useState<"HOURLY" | "FIXED">("HOURLY");
   const [hourlyRateEur, setHourlyRateEur] = useState("");
   const [hourlyRateGbp, setHourlyRateGbp] = useState("");
+  const [dailyWageEur, setDailyWageEur] = useState("");
+  const [dailyWageGbp, setDailyWageGbp] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -45,15 +49,21 @@ export function EmployeeDialog({
         setName(employee.name);
         setEmail(employee.email || "");
         setPhone(employee.phone || "");
+        setWageType((employee as any).wageType || "HOURLY");
         setHourlyRateEur(employee.hourlyRateEur?.toString() || "");
         setHourlyRateGbp(employee.hourlyRateGbp?.toString() || "");
+        setDailyWageEur((employee as any).weeklyWageEur?.toString() || "");
+        setDailyWageGbp((employee as any).weeklyWageGbp?.toString() || "");
       } else {
         // Create mode
         setName("");
         setEmail("");
         setPhone("");
+        setWageType("HOURLY");
         setHourlyRateEur("");
         setHourlyRateGbp("");
+        setDailyWageEur("");
+        setDailyWageGbp("");
       }
     }
   }, [open, employee]);
@@ -73,8 +83,11 @@ export function EmployeeDialog({
         name: name.trim(),
         email: email.trim() || undefined,
         phone: phone.trim() || undefined,
-        hourlyRateEur: hourlyRateEur ? parseFloat(hourlyRateEur) : undefined,
-        hourlyRateGbp: hourlyRateGbp ? parseFloat(hourlyRateGbp) : undefined,
+        wageType,
+        hourlyRateEur: wageType === "HOURLY" && hourlyRateEur ? parseFloat(hourlyRateEur) : undefined,
+        hourlyRateGbp: wageType === "HOURLY" && hourlyRateGbp ? parseFloat(hourlyRateGbp) : undefined,
+        weeklyWageEur: wageType === "FIXED" && dailyWageEur ? parseFloat(dailyWageEur) : undefined,
+        weeklyWageGbp: wageType === "FIXED" && dailyWageGbp ? parseFloat(dailyWageGbp) : undefined,
       };
 
       const url = employee ? `/api/employees/${employee.id}` : "/api/employees";
@@ -158,33 +171,90 @@ export function EmployeeDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="hourlyRateEur">EUR Hourly Rate (€)</Label>
-              <Input
-                id="hourlyRateEur"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={hourlyRateEur}
-                onChange={(e) => setHourlyRateEur(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="hourlyRateGbp">GBP Hourly Rate (£)</Label>
-              <Input
-                id="hourlyRateGbp"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={hourlyRateGbp}
-                onChange={(e) => setHourlyRateGbp(e.target.value)}
-              />
-            </div>
+          {/* Wage Type Selection */}
+          <div className="space-y-3">
+            <Label>Wage Type</Label>
+            <RadioGroup
+              value={wageType}
+              onValueChange={(value) => setWageType(value as "HOURLY" | "FIXED")}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="HOURLY" id="hourly" />
+                <Label htmlFor="hourly" className="font-normal cursor-pointer">
+                  Hourly Rate
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="FIXED" id="fixed" />
+                <Label htmlFor="fixed" className="font-normal cursor-pointer">
+                  Fixed Daily Wage
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
+
+          {/* Hourly Rate Fields */}
+          {wageType === "HOURLY" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="hourlyRateEur">EUR Hourly Rate (€)</Label>
+                <Input
+                  id="hourlyRateEur"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={hourlyRateEur}
+                  onChange={(e) => setHourlyRateEur(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hourlyRateGbp">GBP Hourly Rate (£)</Label>
+                <Input
+                  id="hourlyRateGbp"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={hourlyRateGbp}
+                  onChange={(e) => setHourlyRateGbp(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Daily Wage Fields */}
+          {wageType === "FIXED" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="dailyWageEur">EUR Daily Wage (€)</Label>
+                <Input
+                  id="dailyWageEur"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={dailyWageEur}
+                  onChange={(e) => setDailyWageEur(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dailyWageGbp">GBP Daily Wage (£)</Label>
+                <Input
+                  id="dailyWageGbp"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={dailyWageGbp}
+                  onChange={(e) => setDailyWageGbp(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
 
           <DialogFooter className="gap-2">
             {employee && onDelete && (

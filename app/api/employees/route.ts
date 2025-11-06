@@ -25,7 +25,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, hourlyRateEur, hourlyRateGbp } = body;
+    const { name, email, phone, wageType, hourlyRateEur, hourlyRateGbp, weeklyWageEur, weeklyWageGbp } = body;
 
     // Validation
     if (!name || !name.trim()) {
@@ -40,8 +40,11 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         email: email?.trim() || null,
         phone: phone?.trim() || null,
+        wageType: wageType || "HOURLY",
         hourlyRateEur: hourlyRateEur ? new Decimal(hourlyRateEur) : null,
         hourlyRateGbp: hourlyRateGbp ? new Decimal(hourlyRateGbp) : null,
+        weeklyWageEur: weeklyWageEur ? new Decimal(weeklyWageEur) : null,
+        weeklyWageGbp: weeklyWageGbp ? new Decimal(weeklyWageGbp) : null,
       },
     });
 

@@ -33,7 +33,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
-    const { name, email, phone, hourlyRateEur, hourlyRateGbp } = body;
+    const { name, email, phone, wageType, hourlyRateEur, hourlyRateGbp, weeklyWageEur, weeklyWageGbp } = body;
 
     // Check if employee exists
     const existingEmployee = await prisma.employee.findUnique({
@@ -50,11 +50,18 @@ export async function PATCH(
         ...(name && { name: name.trim() }),
         ...(email !== undefined && { email: email?.trim() || null }),
         ...(phone !== undefined && { phone: phone?.trim() || null }),
+        ...(wageType && { wageType }),
         ...(hourlyRateEur !== undefined && {
           hourlyRateEur: hourlyRateEur ? new Decimal(hourlyRateEur) : null,
         }),
         ...(hourlyRateGbp !== undefined && {
           hourlyRateGbp: hourlyRateGbp ? new Decimal(hourlyRateGbp) : null,
+        }),
+        ...(weeklyWageEur !== undefined && {
+          weeklyWageEur: weeklyWageEur ? new Decimal(weeklyWageEur) : null,
+        }),
+        ...(weeklyWageGbp !== undefined && {
+          weeklyWageGbp: weeklyWageGbp ? new Decimal(weeklyWageGbp) : null,
         }),
       },
     });
