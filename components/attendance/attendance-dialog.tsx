@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Clock } from "lucide-react";
+import { X, Clock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,8 @@ interface AttendanceDialogProps {
   onSuccess: () => void;
   stores: Store[];
   storeId?: string; // Optional: pre-select a store
+  attendanceToEdit?: any; // Optional: existing attendance to edit
+  onDelete?: (id: string) => void; // Optional: delete callback
 }
 
 export function AttendanceDialog({
@@ -40,11 +42,15 @@ export function AttendanceDialog({
   onSuccess,
   stores,
   storeId,
+  attendanceToEdit,
+  onDelete,
 }: AttendanceDialogProps) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [storeEmployees, setStoreEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [attendanceId, setAttendanceId] = useState<string | null>(null);
 
   // Form state
   const [selectedStoreId, setSelectedStoreId] = useState(storeId || "");
@@ -70,6 +76,25 @@ export function AttendanceDialog({
       fetchStoreEmployees(selectedStoreId);
     }
   }, [selectedStoreId]);
+
+  // Load existing attendance data when editing
+  useEffect(() => {
+    if (attendanceToEdit && open) {
+      setEditMode(true);
+      setAttendanceId(attendanceToEdit.id);
+      setSelectedStoreId(attendanceToEdit.storeId);
+      setSelectedEmployeeId(attendanceToEdit.employeeId);
+      setCheckInDate(format(new Date(attendanceToEdit.checkIn), "yyyy-MM-dd"));
+      setCheckInTime(format(new Date(attendanceToEdit.checkIn), "HH:mm"));
+      setCheckOutDate(format(new Date(attendanceToEdit.checkOut), "yyyy-MM-dd"));
+      setCheckOutTime(format(new Date(attendanceToEdit.checkOut), "HH:mm"));
+      setSelectedCurrency(attendanceToEdit.currency as Currency);
+      setNotes(attendanceToEdit.notes || "");
+    } else if (open && !attendanceToEdit) {
+      setEditMode(false);
+      setAttendanceId(null);
+    }
+  }, [attendanceToEdit, open]);
 
   const fetchEmployees = async () => {
     try {
@@ -142,8 +167,11 @@ export function AttendanceDialog({
       const checkInDateTime = new Date(`${checkInDate}T${checkInTime}`);
       const checkOutDateTime = new Date(`${checkOutDate}T${checkOutTime}`);
 
-      const response = await fetch("/api/attendance", {
-        method: "POST",
+      const url = editMode && attendanceId ? `/api/attendance/${attendanceId}` : "/api/attendance";
+      const method = editMode && attendanceId ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           employeeId: selectedEmployeeId,
@@ -153,21 +181,21 @@ export function AttendanceDialog({
           hoursWorked: hours,
           currency: selectedCurrency,
           amountToPay: calculateAmount(),
-          notes: notes.trim() || undefined,
+          notes: notes.trim(),
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to record attendance");
+        throw new Error(error.error || `Failed to ${editMode ? "update" : "record"} attendance`);
       }
 
-      toast.success("Attendance recorded successfully");
+      toast.success(`Attendance ${editMode ? "updated" : "recorded"} successfully`);
       onSuccess();
       handleClose();
     } catch (error: any) {
-      console.error("Error recording attendance:", error);
-      toast.error(error.message || "Failed to record attendance");
+      console.error(`Error ${editMode ? "updating" : "recording"} attendance:`, error);
+      toast.error(error.message || `Failed to ${editMode ? "update" : "record"} attendance`);
     } finally {
       setSaving(false);
     }
@@ -182,7 +210,16 @@ export function AttendanceDialog({
     setCheckOutTime("17:00");
     setSelectedCurrency("EUR");
     setNotes("");
+    setEditMode(false);
+    setAttendanceId(null);
     onClose();
+  };
+
+  const handleDelete = () => {
+    if (attendanceToEdit && attendanceId && onDelete) {
+      onDelete(attendanceId);
+      handleClose();
+    }
   };
 
   const selectedStore = stores.find((s) => s.id === selectedStoreId);
@@ -197,9 +234,9 @@ export function AttendanceDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle>Record Attendance</DialogTitle>
+          <DialogTitle>{editMode ? "Edit Attendance" : "Record Attendance"}</DialogTitle>
           <DialogDescription>
-            Record employee work hours and calculate payment
+            {editMode ? "Update employee work hours and payment" : "Record employee work hours and calculate payment"}
           </DialogDescription>
         </DialogHeader>
 
@@ -361,19 +398,34 @@ export function AttendanceDialog({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              <Clock className="h-4 w-4 mr-2" />
-              {saving ? "Recording..." : "Record Attendance"}
-            </Button>
+          <div className="flex justify-between gap-2 pt-4">
+            {editMode && attendanceToEdit && onDelete && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={handleDelete}
+                disabled={saving}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            <div className={`flex gap-2 ${!(editMode && attendanceToEdit && onDelete) ? 'ml-auto' : ''}`}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saving}>
+                <Clock className="h-4 w-4 mr-2" />
+                {saving 
+                  ? editMode ? "Updating..." : "Recording..." 
+                  : editMode ? "Update Attendance" : "Record Attendance"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

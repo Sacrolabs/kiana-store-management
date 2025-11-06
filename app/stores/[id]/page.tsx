@@ -43,6 +43,7 @@ export default function StoreDetailPage() {
   const [saleToEdit, setSaleToEdit] = useState<Sale | null>(null);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
   const [deliveryToEdit, setDeliveryToEdit] = useState<DeliveryWithRelations | null>(null);
+  const [attendanceToEdit, setAttendanceToEdit] = useState<AttendanceWithRelations | null>(null);
   const [employeesRefreshKey, setEmployeesRefreshKey] = useState(0);
   const [confirmUnpaidDialog, setConfirmUnpaidDialog] = useState<string | null>(null);
 
@@ -306,6 +307,37 @@ export default function StoreDetailPage() {
   const handleCloseDeliveryDialog = () => {
     setDeliveryDialogOpen(false);
     setDeliveryToEdit(null);
+  };
+
+  const handleEditAttendance = (attendance: AttendanceWithRelations) => {
+    setAttendanceToEdit(attendance);
+    setAttendanceDialogOpen(true);
+  };
+
+  const handleDeleteAttendance = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this attendance record?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/attendance/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete attendance");
+
+      toast.success("Attendance record deleted successfully");
+      fetchAttendance();
+      handleCloseAttendanceDialog();
+    } catch (error) {
+      console.error("Error deleting attendance:", error);
+      toast.error("Failed to delete attendance");
+    }
+  };
+
+  const handleCloseAttendanceDialog = () => {
+    setAttendanceDialogOpen(false);
+    setAttendanceToEdit(null);
   };
 
   // Helper function to format hours display
@@ -779,7 +811,11 @@ export default function StoreDetailPage() {
                 </div>
               ) : (
                 attendance.map((record) => (
-                  <Card key={record.id} className="p-4">
+                  <Card 
+                    key={record.id} 
+                    className="p-4 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleEditAttendance(record)}
+                  >
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="font-medium">{record.employee.name}</div>
@@ -841,13 +877,15 @@ export default function StoreDetailPage() {
         <AttendanceDialog
           key={`attendance-${employeesRefreshKey}`}
           open={attendanceDialogOpen}
-          onClose={() => setAttendanceDialogOpen(false)}
+          onClose={handleCloseAttendanceDialog}
           onSuccess={() => {
             fetchAttendance();
-            setAttendanceDialogOpen(false);
+            handleCloseAttendanceDialog();
           }}
           stores={[store]}
           storeId={storeId}
+          attendanceToEdit={attendanceToEdit}
+          onDelete={handleDeleteAttendance}
         />
       )}
 
