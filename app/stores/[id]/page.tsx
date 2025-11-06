@@ -176,7 +176,9 @@ export default function StoreDetailPage() {
       acc[record.currency] = { amount: 0, hours: 0 };
     }
     acc[record.currency].amount += record.amountToPay;
-    acc[record.currency].hours += parseFloat(record.hoursWorked.toString());
+    // Round to 2 decimal places to avoid floating-point precision issues
+    const hours = Math.round(parseFloat(record.hoursWorked.toString()) * 100) / 100;
+    acc[record.currency].hours += hours;
     return acc;
   }, {} as Record<string, { amount: number; hours: number }>);
 
@@ -304,6 +306,15 @@ export default function StoreDetailPage() {
   const handleCloseDeliveryDialog = () => {
     setDeliveryDialogOpen(false);
     setDeliveryToEdit(null);
+  };
+
+  // Helper function to format hours display
+  const formatHours = (hours: number | string | any): string => {
+    const numHours = typeof hours === 'string' ? parseFloat(hours) : typeof hours === 'number' ? hours : parseFloat(hours.toString());
+    // Round to 2 decimal places
+    const rounded = Math.round(numHours * 100) / 100;
+    // If it's a whole number, show without decimals
+    return rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(2);
   };
 
   if (loading) {
@@ -751,7 +762,7 @@ export default function StoreDetailPage() {
                         {formatCurrency(data.amount, currency as any)}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {data.hours.toFixed(2)} hours
+                        {formatHours(data.hours)} hours
                       </div>
                     </div>
                   ))}
@@ -786,7 +797,7 @@ export default function StoreDetailPage() {
                           {formatCurrency(record.amountToPay, record.currency as any)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {record.hoursWorked.toString()} hours
+                          {formatHours(record.hoursWorked)} hours
                         </div>
                       </div>
                     </div>

@@ -51,6 +51,7 @@ export function AttendanceDialog({
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [checkInDate, setCheckInDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [checkInTime, setCheckInTime] = useState("09:00");
+  const [checkOutDate, setCheckOutDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [checkOutTime, setCheckOutTime] = useState("17:00");
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("EUR");
   const [notes, setNotes] = useState("");
@@ -97,10 +98,11 @@ export function AttendanceDialog({
 
   const calculateHours = (): number => {
     const checkIn = new Date(`${checkInDate}T${checkInTime}`);
-    const checkOut = new Date(`${checkInDate}T${checkOutTime}`);
+    const checkOut = new Date(`${checkOutDate}T${checkOutTime}`);
     const diffMs = checkOut.getTime() - checkIn.getTime();
     const diffHours = diffMs / (1000 * 60 * 60);
-    return Math.max(0, diffHours);
+    // Round to 2 decimal places to avoid floating-point precision issues
+    return Math.max(0, Math.round(diffHours * 100) / 100);
   };
 
   const calculateAmount = (): number => {
@@ -138,7 +140,7 @@ export function AttendanceDialog({
     setSaving(true);
     try {
       const checkInDateTime = new Date(`${checkInDate}T${checkInTime}`);
-      const checkOutDateTime = new Date(`${checkInDate}T${checkOutTime}`);
+      const checkOutDateTime = new Date(`${checkOutDate}T${checkOutTime}`);
 
       const response = await fetch("/api/attendance", {
         method: "POST",
@@ -176,6 +178,7 @@ export function AttendanceDialog({
     setSelectedEmployeeId("");
     setCheckInDate(format(new Date(), "yyyy-MM-dd"));
     setCheckInTime("09:00");
+    setCheckOutDate(format(new Date(), "yyyy-MM-dd"));
     setCheckOutTime("17:00");
     setSelectedCurrency("EUR");
     setNotes("");
@@ -248,35 +251,45 @@ export function AttendanceDialog({
             )}
           </div>
 
-          {/* Date */}
+          {/* Check In Date & Time */}
           <div className="space-y-2">
-            <Label htmlFor="date">Date *</Label>
-            <Input
-              id="date"
-              type="date"
-              value={checkInDate}
-              onChange={(e) => setCheckInDate(e.target.value)}
-              max={format(new Date(), "yyyy-MM-dd")}
-              required
-            />
-          </div>
-
-          {/* Time Range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="checkIn">Check In *</Label>
+            <Label>Check In *</Label>
+            <div className="grid grid-cols-2 gap-2">
               <Input
-                id="checkIn"
+                type="date"
+                value={checkInDate}
+                onChange={(e) => {
+                  setCheckInDate(e.target.value);
+                  // Auto-update checkout date to match (can be changed manually)
+                  if (checkOutDate < e.target.value) {
+                    setCheckOutDate(e.target.value);
+                  }
+                }}
+                max={format(new Date(), "yyyy-MM-dd")}
+                required
+              />
+              <Input
                 type="time"
                 value={checkInTime}
                 onChange={(e) => setCheckInTime(e.target.value)}
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="checkOut">Check Out *</Label>
+          </div>
+
+          {/* Check Out Date & Time */}
+          <div className="space-y-2">
+            <Label>Check Out *</Label>
+            <div className="grid grid-cols-2 gap-2">
               <Input
-                id="checkOut"
+                type="date"
+                value={checkOutDate}
+                onChange={(e) => setCheckOutDate(e.target.value)}
+                min={checkInDate}
+                max={format(new Date(), "yyyy-MM-dd")}
+                required
+              />
+              <Input
                 type="time"
                 value={checkOutTime}
                 onChange={(e) => setCheckOutTime(e.target.value)}
