@@ -93,7 +93,7 @@ export default function AttendancePage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col h-full">
+      <Tabs defaultValue="attendance" className="flex flex-col h-full">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background border-b safe-top">
           <div className="p-4">
@@ -138,25 +138,25 @@ export default function AttendancePage() {
               ))}
             </div>
           )}
+
+          {/* Tabs Navigation */}
+          <div className="border-t px-4 bg-background">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="attendance">
+                <Clock className="h-4 w-4 mr-2" />
+                Attendance
+              </TabsTrigger>
+              <TabsTrigger value="employees">
+                <Users className="h-4 w-4 mr-2" />
+                Employees ({employees.length})
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
-        {/* Content with Tabs */}
+        {/* Tabs Content */}
         <div className="flex-1 overflow-auto">
-          <Tabs defaultValue="attendance" className="h-full">
-            <div className="sticky top-0 z-10 bg-background border-b px-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="attendance">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Attendance
-                </TabsTrigger>
-                <TabsTrigger value="employees">
-                  <Users className="h-4 w-4 mr-2" />
-                  Employees ({employees.length})
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value="attendance" className="p-4 space-y-4 mt-0">
+          <TabsContent value="attendance" className="p-4 space-y-4 mt-0">
               {/* Record Attendance Button */}
               {employees.length > 0 && stores.length > 0 && (
                 <Button
@@ -270,9 +270,8 @@ export default function AttendancePage() {
                 ))
               )}
             </TabsContent>
-          </Tabs>
         </div>
-      </div>
+      </Tabs>
 
       {/* Attendance Dialog */}
       <AttendanceDialog

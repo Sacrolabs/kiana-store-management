@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { TrendingUp, DollarSign, Clock, Store as StoreIcon } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { TrendingUp, DollarSign, Clock, Store as StoreIcon, Download } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/layout/app-layout";
 import { formatCurrency } from "@/lib/currency/utils";
 import { DateFilter, DateRange, DateFilterPreset } from "@/components/common/date-filter";
 import { toast } from "sonner";
-import { startOfDay, endOfDay, startOfWeek } from "date-fns";
+import { startOfDay, endOfDay, startOfWeek, format } from "date-fns";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {
   BarChart,
   Bar,
@@ -28,6 +31,8 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [stores, setStores] = useState<any[]>([]);
   const [selectedStoreId, setSelectedStoreId] = useState<string>("all");
+  const [downloading, setDownloading] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   // Date filtering state
   const [datePreset, setDatePreset] = useState<DateFilterPreset>("week");
@@ -39,6 +44,113 @@ export default function ReportsPage() {
   useEffect(() => {
     fetchStats();
   }, [dateRange, selectedStoreId]); // Refetch when date range or store filter changes
+
+  const downloadPDF = async () => {
+    if (!reportRef.current) return;
+
+    try {
+      setDownloading(true);
+      toast.info("Generating PDF...");
+
+      // Get the store name for the filename
+      const selectedStore = stores.find((s) => s.id === selectedStoreId);
+      const storeName = selectedStore ? selectedStore.name : "All Stores";
+      
+      // Format dates for filename and header
+      const fromDate = format(dateRange.from, "dd-MMM-yyyy");
+      const toDate = format(dateRange.to, "dd-MMM-yyyy");
+      const dateRangeText = `${fromDate} to ${toDate}`;
+      
+      // Create filename
+      const filename = `Report_${storeName.replace(/\s+/g, "_")}_${format(dateRange.from, "ddMMMyyyy")}-${format(dateRange.to, "ddMMMyyyy")}.pdf`;
+
+      // Create PDF
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const margin = 15;
+      
+      // Add header
+      pdf.setFontSize(20);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Reports & Analytics", margin, 20);
+      
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Store: ${storeName} | Period: ${dateRangeText}`, margin, 28);
+      pdf.text(`Generated on: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, margin, 33);
+      
+      // Draw line under header
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, 36, pageWidth - margin, 36);
+
+      // Clone the report element to avoid modifying the original
+      const element = reportRef.current.cloneNode(true) as HTMLElement;
+      
+      // Get all card elements
+      const cards = element.querySelectorAll('[class*="card"]');
+      
+      // Create a temporary container for rendering
+      const container = document.createElement("div");
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "800px"; // Fixed width for consistency
+      container.style.backgroundColor = "white";
+      document.body.appendChild(container);
+
+      let currentY = 45; // Start below header
+      let isFirstPage = true;
+
+      // Process each card separately
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i] as HTMLElement;
+        
+        // Clear container and add current card
+        container.innerHTML = "";
+        const cardClone = card.cloneNode(true) as HTMLElement;
+        container.appendChild(cardClone);
+
+        // Generate canvas for this card
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+        });
+
+        const imgWidth = pageWidth - (2 * margin);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Check if card fits on current page
+        if (currentY + imgHeight > pageHeight - margin) {
+          // Add new page if not first card
+          pdf.addPage();
+          currentY = margin;
+          isFirstPage = false;
+        }
+
+        // Add card image to PDF
+        const imgData = canvas.toDataURL("image/png");
+        pdf.addImage(imgData, "PNG", margin, currentY, imgWidth, imgHeight);
+        
+        // Update Y position for next card
+        currentY += imgHeight + 5; // 5mm gap between cards
+      }
+
+      // Remove temporary container
+      document.body.removeChild(container);
+
+      // Save the PDF
+      pdf.save(filename);
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -112,6 +224,27 @@ export default function ReportsPage() {
         return acc;
       }, {});
 
+      // Calculate payment method totals
+      const paymentMethodTotals = sales.reduce((acc: any, sale: any) => {
+        if (!acc[sale.currency]) {
+          acc[sale.currency] = {
+            cash: 0,
+            online: 0,
+            delivery: 0,
+            justEat: 0,
+            mylocal: 0,
+            creditCard: 0,
+          };
+        }
+        acc[sale.currency].cash += sale.cash || 0;
+        acc[sale.currency].online += sale.online || 0;
+        acc[sale.currency].delivery += sale.delivery || 0;
+        acc[sale.currency].justEat += sale.justEat || 0;
+        acc[sale.currency].mylocal += sale.mylocal || 0;
+        acc[sale.currency].creditCard += sale.creditCard || 0;
+        return acc;
+      }, {});
+
       const totalPayroll = attendance.reduce((acc: any, record: any) => {
         if (!acc[record.currency]) acc[record.currency] = 0;
         acc[record.currency] += record.amountToPay;
@@ -161,6 +294,7 @@ export default function ReportsPage() {
       setStats({
         stores: storesData.length,
         totalSales,
+        paymentMethodTotals,
         totalPayroll,
         totalExpenses,
         totalDeliveryExpenses,
@@ -196,10 +330,22 @@ export default function ReportsPage() {
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background border-b safe-top">
           <div className="p-4 pb-2">
-            <h1 className="text-2xl font-bold">Reports & Analytics</h1>
-            <p className="text-sm text-muted-foreground">
-              Overview of your business
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold">Reports & Analytics</h1>
+                <p className="text-sm text-muted-foreground">
+                  Overview of your business
+                </p>
+              </div>
+              <Button 
+                onClick={downloadPDF} 
+                disabled={downloading || loading}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {downloading ? "Generating..." : "Download PDF"}
+              </Button>
+            </div>
           </div>
 
           {/* Filters */}
@@ -232,7 +378,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-4 space-y-4">
+        <div ref={reportRef} className="flex-1 overflow-auto p-4 space-y-4">
           {/* Overview Cards */}
           <Card>
             <CardHeader className="pb-2">
@@ -246,7 +392,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          {/* Revenue Distribution Chart */}
+          {/* Revenue Distribution Table */}
           {stats?.totalSales && Object.keys(stats.totalSales).length > 0 && (
             <Card>
               <CardHeader>
@@ -254,12 +400,59 @@ export default function ReportsPage() {
                 <CardDescription>Sales breakdown by currency</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">
+                          Currency
+                        </th>
+                        <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">
+                          Amount
+                        </th>
+                        <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">
+                          %
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const total = Object.values(stats.totalSales).reduce((sum: number, amt: any) => sum + amt, 0);
+                        return Object.entries(stats.totalSales).map(([currency, amount]: [string, any]) => {
+                          const percentage = ((amount / total) * 100).toFixed(1);
+                          return (
+                            <tr key={currency} className="border-b last:border-b-0">
+                              <td className="py-3 px-3 text-sm font-medium">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 rounded-full ${
+                                    currency === "EUR" ? "bg-blue-500" : "bg-green-500"
+                                  }`} />
+                                  {currency}
+                                </div>
+                              </td>
+                              <td className={`py-3 px-3 text-sm font-semibold text-right ${
+                                currency === "EUR" ? "text-eur" : "text-gbp"
+                              }`}>
+                                {formatCurrency(amount, currency as any)}
+                              </td>
+                              <td className="py-3 px-3 text-sm text-right text-muted-foreground">
+                                {percentage}%
+                              </td>
+                            </tr>
+                          );
+                        });
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Chart - Hidden for now */}
+                {/* <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
                       data={Object.entries(stats.totalSales).map(([currency, amount]: [string, any]) => ({
                         name: currency,
-                        value: amount / 100, // Convert from cents to major units for display
+                        value: amount / 100,
                         fill: currency === "EUR" ? "#3b82f6" : "#10b981",
                       }))}
                       dataKey="value"
@@ -277,12 +470,12 @@ export default function ReportsPage() {
                       formatter={(value: any) => `${(value as number).toFixed(2)}`}
                     />
                   </PieChart>
-                </ResponsiveContainer>
+                </ResponsiveContainer> */}
               </CardContent>
             </Card>
           )}
 
-          {/* Sales by Store Chart */}
+          {/* Sales by Store Table */}
           {stats?.salesByStore && Object.keys(stats.salesByStore).length > 0 && (
             <Card>
               <CardHeader>
@@ -290,7 +483,71 @@ export default function ReportsPage() {
                 <CardDescription>Revenue comparison across locations</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">
+                          Store
+                        </th>
+                        <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">
+                          EUR
+                        </th>
+                        <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">
+                          GBP
+                        </th>
+                        <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">
+                          Total
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(stats.salesByStore).map(([storeName, amounts]: [string, any]) => {
+                        // Calculate total in a common unit (just for display order, showing actual amounts)
+                        const hasEur = amounts.EUR > 0;
+                        const hasGbp = amounts.GBP > 0;
+                        
+                        return (
+                          <tr key={storeName} className="border-b last:border-b-0">
+                            <td className="py-3 px-3 text-sm font-medium">
+                              {storeName}
+                            </td>
+                            <td className="py-3 px-3 text-sm font-semibold text-right text-eur">
+                              {hasEur ? formatCurrency(amounts.EUR, "EUR") : "-"}
+                            </td>
+                            <td className="py-3 px-3 text-sm font-semibold text-right text-gbp">
+                              {hasGbp ? formatCurrency(amounts.GBP, "GBP") : "-"}
+                            </td>
+                            <td className="py-3 px-3 text-sm text-right text-muted-foreground">
+                              {hasEur && hasGbp ? "Mixed" : hasEur ? formatCurrency(amounts.EUR, "EUR") : formatCurrency(amounts.GBP, "GBP")}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 font-bold">
+                        <td className="py-3 px-3 text-sm">Total</td>
+                        <td className="py-3 px-3 text-sm text-right text-eur">
+                          {formatCurrency(
+                            Object.values(stats.salesByStore).reduce((sum: number, amounts: any) => sum + amounts.EUR, 0),
+                            "EUR"
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-sm text-right text-gbp">
+                          {formatCurrency(
+                            Object.values(stats.salesByStore).reduce((sum: number, amounts: any) => sum + amounts.GBP, 0),
+                            "GBP"
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-sm text-right">-</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* Chart - Hidden for now */}
+                {/* <ResponsiveContainer width="100%" height={300}>
                   <BarChart
                     data={Object.entries(stats.salesByStore).map(([storeName, amounts]: [string, any]) => ({
                       store: storeName.length > 15 ? storeName.substring(0, 15) + "..." : storeName,
@@ -312,7 +569,118 @@ export default function ReportsPage() {
                     <Bar dataKey="EUR" fill="#3b82f6" name="EUR (€)" />
                     <Bar dataKey="GBP" fill="#10b981" name="GBP (£)" />
                   </BarChart>
-                </ResponsiveContainer>
+                </ResponsiveContainer> */}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment Method Distribution Table */}
+          {stats?.paymentMethodTotals && Object.keys(stats.paymentMethodTotals).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue by Payment Method</CardTitle>
+                <CardDescription>Sales breakdown by payment type</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {Object.entries(stats.paymentMethodTotals).map(([currency, methods]: [string, any]) => {
+                  // Calculate total for percentage
+                  const total = methods.cash + methods.online + methods.delivery + 
+                                methods.justEat + methods.mylocal + methods.creditCard;
+                  
+                  if (total === 0) return null;
+
+                  // Prepare table data
+                  const tableData = [
+                    { name: "Cash", amount: methods.cash, color: "text-green-600" },
+                    { name: "Online", amount: methods.online, color: "text-blue-600" },
+                    { name: "Delivery", amount: methods.delivery, color: "text-amber-600" },
+                    { name: "Just Eat", amount: methods.justEat, color: "text-red-600" },
+                    { name: "MyLocal", amount: methods.mylocal, color: "text-purple-600" },
+                    { name: "Credit Card", amount: methods.creditCard, color: "text-indigo-600" },
+                  ].filter((item) => item.amount > 0); // Only show non-zero values
+
+                  return (
+                    <div key={currency} className="mb-6 last:mb-0">
+                      <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            currency === "EUR" ? "bg-blue-500" : "bg-green-500"
+                          }`}
+                        />
+                        {currency}
+                      </h4>
+                      
+                      {/* Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">
+                                Payment Method
+                              </th>
+                              <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">
+                                Amount
+                              </th>
+                              <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">
+                                %
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tableData.map((row) => {
+                              const percentage = ((row.amount / total) * 100).toFixed(1);
+                              return (
+                                <tr key={row.name} className="border-b last:border-b-0">
+                                  <td className="py-3 px-3 text-sm font-medium">
+                                    {row.name}
+                                  </td>
+                                  <td className={`py-3 px-3 text-sm font-semibold text-right ${row.color}`}>
+                                    {formatCurrency(row.amount, currency as any)}
+                                  </td>
+                                  <td className="py-3 px-3 text-sm text-right text-muted-foreground">
+                                    {percentage}%
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            <tr className="border-t-2 font-bold">
+                              <td className="py-3 px-3 text-sm">Total</td>
+                              <td className={`py-3 px-3 text-sm text-right ${
+                                currency === "EUR" ? "text-eur" : "text-gbp"
+                              }`}>
+                                {formatCurrency(total, currency as any)}
+                              </td>
+                              <td className="py-3 px-3 text-sm text-right">100%</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Chart - Hidden for now */}
+                      {/* <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={tableData.map(row => ({ name: row.name, value: row.amount / 100 }))}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            label={(entry: any) =>
+                              `${entry.name}: ${formatCurrency((entry.value as number) * 100, currency as any)}`
+                            }
+                          />
+                          <Tooltip
+                            formatter={(value: any) =>
+                              formatCurrency((value as number) * 100, currency as any)
+                            }
+                          />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer> */}
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           )}
