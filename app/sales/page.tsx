@@ -4,6 +4,13 @@ import { useState, useEffect } from "react";
 import { Plus, DollarSign, Calendar, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AppLayout } from "@/components/layout/app-layout";
 import { SalesDialog } from "./sales-dialog";
 import { Store } from "@/lib/types/store";
@@ -26,6 +33,9 @@ export default function SalesPage() {
     from: startOfWeek(new Date(), { weekStartsOn: 1 }),
     to: endOfDay(new Date()),
   });
+
+  // Store filtering state
+  const [selectedStoreId, setSelectedStoreId] = useState<string>("all");
 
   useEffect(() => {
     Promise.all([fetchSales(), fetchStores()]).finally(() => setLoading(false));
@@ -95,10 +105,12 @@ export default function SalesPage() {
     }
   };
 
-  // Filter sales by date range
+  // Filter sales by date range and store
   const filteredSales = sales.filter((sale) => {
     const saleDate = new Date(sale.date);
-    return saleDate >= dateRange.from && saleDate <= dateRange.to;
+    const matchesDate = saleDate >= dateRange.from && saleDate <= dateRange.to;
+    const matchesStore = selectedStoreId === "all" || sale.storeId === selectedStoreId;
+    return matchesDate && matchesStore;
   });
 
   // Calculate totals by currency (from filtered sales)
@@ -143,6 +155,29 @@ export default function SalesPage() {
               preset={datePreset}
               onPresetChange={setDatePreset}
             />
+          </div>
+
+          {/* Store Filter */}
+          <div className="px-4 pb-2">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Store
+            </label>
+            <Select
+              value={selectedStoreId}
+              onValueChange={setSelectedStoreId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Stores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stores</SelectItem>
+                {stores.map((store) => (
+                  <SelectItem key={store.id} value={store.id}>
+                    {store.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Totals Summary */}

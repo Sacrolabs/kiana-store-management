@@ -372,7 +372,7 @@ export default function StoreDetailPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col h-full">
+      <Tabs defaultValue="sales" className="flex flex-col h-full">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background border-b safe-top">
           <div className="p-4">
@@ -425,34 +425,34 @@ export default function StoreDetailPage() {
               onPresetChange={setDatePreset}
             />
           </div>
+
+          {/* Tabs Navigation */}
+          <div className="border-t px-4 bg-background">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="sales">
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Sales
+              </TabsTrigger>
+              <TabsTrigger value="expenses">
+                <Receipt className="h-4 w-4 mr-2" />
+                Expenses
+              </TabsTrigger>
+              <TabsTrigger value="drivers">
+                <Truck className="h-4 w-4 mr-2" />
+                Drivers
+              </TabsTrigger>
+              <TabsTrigger value="staff">
+                <Users className="h-4 w-4 mr-2" />
+                Staff
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
-        {/* Content with Tabs */}
+        {/* Tabs Content */}
         <div className="flex-1 overflow-auto">
-          <Tabs defaultValue="sales" className="h-full">
-            <div className="sticky top-0 z-10 bg-background border-b px-4">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="sales">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Sales
-                </TabsTrigger>
-                <TabsTrigger value="expenses">
-                  <Receipt className="h-4 w-4 mr-2" />
-                  Expenses
-                </TabsTrigger>
-                <TabsTrigger value="drivers">
-                  <Truck className="h-4 w-4 mr-2" />
-                  Drivers
-                </TabsTrigger>
-                <TabsTrigger value="staff">
-                  <Users className="h-4 w-4 mr-2" />
-                  Staff
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            {/* Sales Tab */}
-            <TabsContent value="sales" className="p-4 space-y-4 mt-0">
+          {/* Sales Tab */}
+          <TabsContent value="sales" className="p-4 space-y-4 mt-0">
               {/* Add Sale Button */}
               <Button
                 onClick={() => setSalesDialogOpen(true)}
@@ -846,9 +846,8 @@ export default function StoreDetailPage() {
                 ))
               )}
             </TabsContent>
-          </Tabs>
         </div>
-      </div>
+      </Tabs>
 
       {/* Store Employees Dialog */}
       {store && (

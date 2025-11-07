@@ -5,6 +5,13 @@ import { Plus, DollarSign, Receipt, CheckCircle, Pencil, XCircle } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ExpenseWithRelations } from "@/lib/types/expense";
 import { VendorWithExpenseCount } from "@/lib/types/vendor";
@@ -33,6 +40,10 @@ export default function ExpensesPage() {
     from: startOfWeek(new Date(), { weekStartsOn: 1 }),
     to: endOfDay(new Date()),
   });
+
+  // Store and vendor filtering state
+  const [selectedStoreId, setSelectedStoreId] = useState<string>("all");
+  const [selectedVendorId, setSelectedVendorId] = useState<string>("all");
 
   useEffect(() => {
     Promise.all([fetchExpenses(), fetchVendors(), fetchStores()]).finally(() =>
@@ -75,10 +86,13 @@ export default function ExpensesPage() {
     }
   };
 
-  // Filter expenses by date range
+  // Filter expenses by date range, store, and vendor
   const filteredExpenses = expenses.filter((expense) => {
     const expenseDate = new Date(expense.expenseDate);
-    return expenseDate >= dateRange.from && expenseDate <= dateRange.to;
+    const matchesDate = expenseDate >= dateRange.from && expenseDate <= dateRange.to;
+    const matchesStore = selectedStoreId === "all" || expense.storeId === selectedStoreId;
+    const matchesVendor = selectedVendorId === "all" || expense.vendorId === selectedVendorId;
+    return matchesDate && matchesStore && matchesVendor;
   });
 
   // Calculate totals by currency (from filtered expenses)
@@ -207,7 +221,7 @@ export default function ExpensesPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col h-full">
+      <Tabs defaultValue="expenses" className="flex flex-col h-full">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background border-b safe-top">
           <div className="p-4">
@@ -225,6 +239,53 @@ export default function ExpensesPage() {
               preset={datePreset}
               onPresetChange={setDatePreset}
             />
+          </div>
+
+          {/* Store and Vendor Filters */}
+          <div className="px-4 pb-2 grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Store
+              </label>
+              <Select
+                value={selectedStoreId}
+                onValueChange={setSelectedStoreId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Stores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Stores</SelectItem>
+                  {stores.map((store) => (
+                    <SelectItem key={store.id} value={store.id}>
+                      {store.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Vendor
+              </label>
+              <Select
+                value={selectedVendorId}
+                onValueChange={setSelectedVendorId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Vendors" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Vendors</SelectItem>
+                  {vendors.map((vendor) => (
+                    <SelectItem key={vendor.id} value={vendor.id}>
+                      {vendor.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Totals Summary */}
@@ -251,25 +312,25 @@ export default function ExpensesPage() {
               ))}
             </div>
           )}
+
+          {/* Tabs Navigation */}
+          <div className="border-t px-4 bg-background">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="expenses">
+                <Receipt className="h-4 w-4 mr-2" />
+                Expenses
+              </TabsTrigger>
+              <TabsTrigger value="vendors">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Vendors ({vendors.length})
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
-        {/* Content with Tabs */}
+        {/* Tabs Content */}
         <div className="flex-1 overflow-auto">
-          <Tabs defaultValue="expenses" className="h-full">
-            <div className="sticky top-0 z-10 bg-background border-b px-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="expenses">
-                  <Receipt className="h-4 w-4 mr-2" />
-                  Expenses
-                </TabsTrigger>
-                <TabsTrigger value="vendors">
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Vendors ({vendors.length})
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value="expenses" className="p-4 space-y-4 mt-0">
+          <TabsContent value="expenses" className="p-4 space-y-4 mt-0">
               {/* Add Expense Button */}
               {stores.length > 0 && vendors.length > 0 && (
                 <Button onClick={handleAddExpense} className="w-full">
@@ -442,9 +503,8 @@ export default function ExpensesPage() {
                 ))
               )}
             </TabsContent>
-          </Tabs>
         </div>
-      </div>
+      </Tabs>
 
       <VendorDialog
         open={vendorDialogOpen}

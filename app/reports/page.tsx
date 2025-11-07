@@ -112,6 +112,27 @@ export default function ReportsPage() {
         return acc;
       }, {});
 
+      // Calculate payment method totals
+      const paymentMethodTotals = sales.reduce((acc: any, sale: any) => {
+        if (!acc[sale.currency]) {
+          acc[sale.currency] = {
+            cash: 0,
+            online: 0,
+            delivery: 0,
+            justEat: 0,
+            mylocal: 0,
+            creditCard: 0,
+          };
+        }
+        acc[sale.currency].cash += sale.cash || 0;
+        acc[sale.currency].online += sale.online || 0;
+        acc[sale.currency].delivery += sale.delivery || 0;
+        acc[sale.currency].justEat += sale.justEat || 0;
+        acc[sale.currency].mylocal += sale.mylocal || 0;
+        acc[sale.currency].creditCard += sale.creditCard || 0;
+        return acc;
+      }, {});
+
       const totalPayroll = attendance.reduce((acc: any, record: any) => {
         if (!acc[record.currency]) acc[record.currency] = 0;
         acc[record.currency] += record.amountToPay;
@@ -161,6 +182,7 @@ export default function ReportsPage() {
       setStats({
         stores: storesData.length,
         totalSales,
+        paymentMethodTotals,
         totalPayroll,
         totalExpenses,
         totalDeliveryExpenses,
@@ -313,6 +335,69 @@ export default function ReportsPage() {
                     <Bar dataKey="GBP" fill="#10b981" name="GBP (£)" />
                   </BarChart>
                 </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment Method Distribution Chart */}
+          {stats?.paymentMethodTotals && Object.keys(stats.paymentMethodTotals).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue by Payment Method</CardTitle>
+                <CardDescription>Sales breakdown by payment type</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {Object.entries(stats.paymentMethodTotals).map(([currency, methods]: [string, any]) => {
+                  // Convert to chart data format
+                  const chartData = [
+                    { name: "Cash", value: methods.cash / 100, fill: "#10b981" },
+                    { name: "Online", value: methods.online / 100, fill: "#3b82f6" },
+                    { name: "Delivery", value: methods.delivery / 100, fill: "#f59e0b" },
+                    { name: "Just Eat", value: methods.justEat / 100, fill: "#ef4444" },
+                    { name: "MyLocal", value: methods.mylocal / 100, fill: "#8b5cf6" },
+                    { name: "Credit Card", value: methods.creditCard / 100, fill: "#6366f1" },
+                  ].filter((item) => item.value > 0); // Only show non-zero values
+
+                  if (chartData.length === 0) return null;
+
+                  return (
+                    <div key={currency} className="mb-6 last:mb-0">
+                      <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            currency === "EUR" ? "bg-blue-500" : "bg-green-500"
+                          }`}
+                        />
+                        {currency}
+                      </h4>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={chartData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            label={(entry: any) =>
+                              `${entry.name}: ${formatCurrency((entry.value as number) * 100, currency as any)}`
+                            }
+                          >
+                            {chartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value: any) =>
+                              formatCurrency((value as number) * 100, currency as any)
+                            }
+                          />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           )}
