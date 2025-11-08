@@ -273,31 +273,57 @@ export default function SalesPage() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <div className="text-xs text-muted-foreground">Cash</div>
-                    <div className="font-medium">{formatCurrency(sale.cash, sale.currency as any)}</div>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <div className="text-xs text-muted-foreground">Cash</div>
+                      <div className="font-medium">{formatCurrency(sale.cash, sale.currency as any)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Online</div>
+                      <div className="font-medium">{formatCurrency(sale.online, sale.currency as any)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Delivery</div>
+                      <div className="font-medium">{formatCurrency(sale.delivery, sale.currency as any)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Just Eat</div>
+                      <div className="font-medium">{formatCurrency(sale.justEat, sale.currency as any)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">MyLocal</div>
+                      <div className="font-medium">{formatCurrency(sale.mylocal, sale.currency as any)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Card</div>
+                      <div className="font-medium">{formatCurrency(sale.creditCard, sale.currency as any)}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">Online</div>
-                    <div className="font-medium">{formatCurrency(sale.online, sale.currency as any)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">Delivery</div>
-                    <div className="font-medium">{formatCurrency(sale.delivery, sale.currency as any)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">Just Eat</div>
-                    <div className="font-medium">{formatCurrency(sale.justEat, sale.currency as any)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">MyLocal</div>
-                    <div className="font-medium">{formatCurrency(sale.mylocal, sale.currency as any)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">Card</div>
-                    <div className="font-medium">{formatCurrency(sale.creditCard, sale.currency as any)}</div>
-                  </div>
+                  
+                  {/* Cash Reconciliation */}
+                  {((sale as any).cashInTill !== undefined && (sale as any).cashInTill !== null) && (
+                    <div className="pt-3 border-t">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <div className="text-xs text-muted-foreground">Cash in Till</div>
+                          <div className="font-medium">{formatCurrency((sale as any).cashInTill, sale.currency as any)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Difference</div>
+                          <div className={`font-medium ${
+                            (sale as any).difference === 0 
+                              ? "text-green-600" 
+                              : (sale as any).difference > 0 
+                              ? "text-orange-600" 
+                              : "text-red-600"
+                          }`}>
+                            {formatCurrency((sale as any).difference, sale.currency as any)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))

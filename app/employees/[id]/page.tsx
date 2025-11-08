@@ -114,20 +114,35 @@ export default function EmployeeDetailPage() {
             <div className="text-sm text-muted-foreground space-y-1 mt-2">
               {employee.email && <div>{employee.email}</div>}
               {employee.phone && <div>{employee.phone}</div>}
-              {(employee.hourlyRateEur || employee.hourlyRateGbp) && (
-                <div className="flex gap-3 mt-2">
-                  {employee.hourlyRateEur && (
-                    <span className="text-eur">
-                      €{employee.hourlyRateEur.toString()}/hr
-                    </span>
-                  )}
-                  {employee.hourlyRateGbp && (
-                    <span className="text-gbp">
-                      £{employee.hourlyRateGbp.toString()}/hr
-                    </span>
-                  )}
-                </div>
-              )}
+              <div className="flex gap-3 mt-2">
+                {((employee as any).wageType || "HOURLY") === "HOURLY" ? (
+                  <>
+                    {employee.hourlyRateEur && (
+                      <span className="text-eur">
+                        €{employee.hourlyRateEur.toString()}/hr
+                      </span>
+                    )}
+                    {employee.hourlyRateGbp && (
+                      <span className="text-gbp">
+                        £{employee.hourlyRateGbp.toString()}/hr
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {(employee as any).weeklyWageEur && (
+                      <span className="text-eur">
+                        €{(employee as any).weeklyWageEur.toString()}/day
+                      </span>
+                    )}
+                    {(employee as any).weeklyWageGbp && (
+                      <span className="text-gbp">
+                        £{(employee as any).weeklyWageGbp.toString()}/day
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
 

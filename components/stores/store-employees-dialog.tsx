@@ -220,15 +220,32 @@ export function StoreEmployeesDialog({
                           </div>
                         )}
                         <div className="flex gap-2 mt-1">
-                          {employee.hourlyRateEur && (
-                            <span className="text-xs text-eur">
-                              €{employee.hourlyRateEur.toString()}/hr
-                            </span>
-                          )}
-                          {employee.hourlyRateGbp && (
-                            <span className="text-xs text-gbp">
-                              £{employee.hourlyRateGbp.toString()}/hr
-                            </span>
+                          {((employee as any).wageType || "HOURLY") === "HOURLY" ? (
+                            <>
+                              {employee.hourlyRateEur && (
+                                <span className="text-xs text-eur">
+                                  €{employee.hourlyRateEur.toString()}/hr
+                                </span>
+                              )}
+                              {employee.hourlyRateGbp && (
+                                <span className="text-xs text-gbp">
+                                  £{employee.hourlyRateGbp.toString()}/hr
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {(employee as any).weeklyWageEur && (
+                                <span className="text-xs text-eur">
+                                  €{(employee as any).weeklyWageEur.toString()}/day
+                                </span>
+                              )}
+                              {(employee as any).weeklyWageGbp && (
+                                <span className="text-xs text-gbp">
+                                  £{(employee as any).weeklyWageGbp.toString()}/day
+                                </span>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
