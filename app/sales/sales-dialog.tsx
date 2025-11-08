@@ -56,6 +56,7 @@ export function SalesDialog({
   const [justEatEur, setJustEatEur] = useState(0);
   const [mylocalEur, setMylocalEur] = useState(0);
   const [creditCardEur, setCreditCardEur] = useState(0);
+  const [cashInTillEur, setCashInTillEur] = useState(0);
 
   // GBP amounts (in minor units - pence)
   const [cashGbp, setCashGbp] = useState(0);
@@ -64,6 +65,7 @@ export function SalesDialog({
   const [justEatGbp, setJustEatGbp] = useState(0);
   const [mylocalGbp, setMylocalGbp] = useState(0);
   const [creditCardGbp, setCreditCardGbp] = useState(0);
+  const [cashInTillGbp, setCashInTillGbp] = useState(0);
 
   useEffect(() => {
     if (open) {
@@ -81,6 +83,7 @@ export function SalesDialog({
           setJustEatEur(sale.justEat);
           setMylocalEur(sale.mylocal);
           setCreditCardEur(sale.creditCard);
+          setCashInTillEur((sale as any).cashInTill || 0);
           // Reset GBP fields
           setCashGbp(0);
           setOnlineGbp(0);
@@ -88,6 +91,7 @@ export function SalesDialog({
           setJustEatGbp(0);
           setMylocalGbp(0);
           setCreditCardGbp(0);
+          setCashInTillGbp(0);
         } else {
           setCashGbp(sale.cash);
           setOnlineGbp(sale.online);
@@ -95,6 +99,7 @@ export function SalesDialog({
           setJustEatGbp(sale.justEat);
           setMylocalGbp(sale.mylocal);
           setCreditCardGbp(sale.creditCard);
+          setCashInTillGbp((sale as any).cashInTill || 0);
           // Reset EUR fields
           setCashEur(0);
           setOnlineEur(0);
@@ -102,6 +107,7 @@ export function SalesDialog({
           setJustEatEur(0);
           setMylocalEur(0);
           setCreditCardEur(0);
+          setCashInTillEur(0);
         }
       } else {
         // Create mode
@@ -167,6 +173,10 @@ export function SalesDialog({
 
       if (sale) {
         // Edit mode - update the single existing sale
+        const cashInTill = sale.currency === "EUR" ? cashInTillEur : cashInTillGbp;
+        const total = sale.currency === "EUR" ? totalEur : totalGbp;
+        const difference = total - cashInTill;
+
         const payload = {
           storeId: selectedStore,
           currency: sale.currency,
@@ -177,6 +187,8 @@ export function SalesDialog({
           justEat: sale.currency === "EUR" ? justEatEur : justEatGbp,
           mylocal: sale.currency === "EUR" ? mylocalEur : mylocalGbp,
           creditCard: sale.currency === "EUR" ? creditCardEur : creditCardGbp,
+          cashInTill,
+          difference,
           notes: notes.trim() || undefined,
         };
 
@@ -197,6 +209,7 @@ export function SalesDialog({
         const salesToCreate = [];
 
         if (totalEur > 0 && supportsEur) {
+          const differenceEur = totalEur - cashInTillEur;
           salesToCreate.push({
             storeId: selectedStore,
             currency: "EUR",
@@ -207,11 +220,14 @@ export function SalesDialog({
             justEat: justEatEur,
             mylocal: mylocalEur,
             creditCard: creditCardEur,
+            cashInTill: cashInTillEur,
+            difference: differenceEur,
             notes: notes.trim() || undefined,
           });
         }
 
         if (totalGbp > 0 && supportsGbp) {
+          const differenceGbp = totalGbp - cashInTillGbp;
           salesToCreate.push({
             storeId: selectedStore,
             currency: "GBP",
@@ -222,6 +238,8 @@ export function SalesDialog({
             justEat: justEatGbp,
             mylocal: mylocalGbp,
             creditCard: creditCardGbp,
+            cashInTill: cashInTillGbp,
+            difference: differenceGbp,
             notes: notes.trim() || undefined,
           });
         }
@@ -381,6 +399,35 @@ export function SalesDialog({
                     </div>
                   </div>
                 )}
+                {/* Cash Reconciliation */}
+                <div className="pt-3 border-t space-y-3">
+                  <CurrencyInput
+                    label="Cash in Till"
+                    id="cashInTill-eur"
+                    value={cashInTillEur}
+                    onChange={setCashInTillEur}
+                    currency="EUR"
+                  />
+                  {totalEur > 0 && (
+                    <div className="p-3 bg-muted rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Difference:</span>
+                        <span className={`text-lg font-bold ${
+                          totalEur - cashInTillEur === 0 
+                            ? "text-green-600" 
+                            : totalEur - cashInTillEur > 0 
+                            ? "text-orange-600" 
+                            : "text-red-600"
+                        }`}>
+                          {formatCurrency(totalEur - cashInTillEur, "EUR")}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Total Sales - Cash in Till
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -443,6 +490,35 @@ export function SalesDialog({
                     </div>
                   </div>
                 )}
+                {/* Cash Reconciliation */}
+                <div className="pt-3 border-t space-y-3">
+                  <CurrencyInput
+                    label="Cash in Till"
+                    id="cashInTill-gbp"
+                    value={cashInTillGbp}
+                    onChange={setCashInTillGbp}
+                    currency="GBP"
+                  />
+                  {totalGbp > 0 && (
+                    <div className="p-3 bg-muted rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Difference:</span>
+                        <span className={`text-lg font-bold ${
+                          totalGbp - cashInTillGbp === 0 
+                            ? "text-green-600" 
+                            : totalGbp - cashInTillGbp > 0 
+                            ? "text-orange-600" 
+                            : "text-red-600"
+                        }`}>
+                          {formatCurrency(totalGbp - cashInTillGbp, "GBP")}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Total Sales - Cash in Till
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
