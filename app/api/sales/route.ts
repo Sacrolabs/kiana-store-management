@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await safeJsonParse(request);
-    const { storeId, currency, date, cash, online, delivery, justEat, mylocal, creditCard, notes } = body;
+    const { storeId, currency, date, cash, online, delivery, justEat, mylocal, creditCard, cashInTill, difference, notes } = body;
 
     // Validation
     if (!storeId) {
@@ -120,6 +120,8 @@ export async function POST(request: NextRequest) {
     const justEatAmount = justEat !== undefined ? parseInteger(justEat, "justEat", { min: 0 }) : 0;
     const mylocalAmount = mylocal !== undefined ? parseInteger(mylocal, "mylocal", { min: 0 }) : 0;
     const creditCardAmount = creditCard !== undefined ? parseInteger(creditCard, "creditCard", { min: 0 }) : 0;
+    const cashInTillAmount = cashInTill !== undefined ? parseInteger(cashInTill, "cashInTill", { min: 0 }) : 0;
+    const differenceAmount = difference !== undefined ? parseInteger(difference, "difference") : 0;
 
     const total = cashAmount + onlineAmount + deliveryAmount + justEatAmount + mylocalAmount + creditCardAmount;
 
@@ -138,6 +140,8 @@ export async function POST(request: NextRequest) {
         mylocal: mylocalAmount,
         creditCard: creditCardAmount,
         total,
+        cashInTill: cashInTillAmount,
+        difference: differenceAmount,
         notes: notes?.trim() || null,
       },
       include: {

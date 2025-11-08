@@ -118,6 +118,10 @@ model Sale {
   creditCard Int      @default(0) @map("credit_card")
   total      Int      @default(0)
 
+  // Cash reconciliation fields
+  cashInTill Int      @default(0) @map("cash_in_till")
+  difference Int      @default(0)
+
   notes      String?
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
