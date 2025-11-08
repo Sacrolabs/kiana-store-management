@@ -58,7 +58,7 @@ export async function PATCH(
     validateUUID(params.id, "sale ID");
 
     const body = await safeJsonParse(request);
-    const { storeId, currency, date, cash, online, delivery, justEat, mylocal, creditCard, notes } = body;
+    const { storeId, currency, date, cash, online, delivery, justEat, mylocal, creditCard, cashInTill, difference, notes } = body;
 
     // Check if sale exists
     const existingSale = await prisma.sale.findUnique({
@@ -110,6 +110,10 @@ export async function PATCH(
     if (justEat !== undefined) amounts.justEat = parseInteger(justEat, "justEat", { min: 0 });
     if (mylocal !== undefined) amounts.mylocal = parseInteger(mylocal, "mylocal", { min: 0 });
     if (creditCard !== undefined) amounts.creditCard = parseInteger(creditCard, "creditCard", { min: 0 });
+
+    // Update cash reconciliation fields
+    if (cashInTill !== undefined) updateData.cashInTill = parseInteger(cashInTill, "cashInTill", { min: 0 });
+    if (difference !== undefined) updateData.difference = parseInteger(difference, "difference");
 
     // If any amounts were updated, recalculate total
     if (Object.keys(amounts).length > 0) {

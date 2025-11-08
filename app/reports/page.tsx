@@ -274,6 +274,19 @@ export default function ReportsPage() {
         return acc;
       }, {});
 
+      // Calculate cash reconciliation totals (separate from sales calculations)
+      const totalCashInTill = sales.reduce((acc: any, sale: any) => {
+        if (!acc[sale.currency]) acc[sale.currency] = 0;
+        acc[sale.currency] += sale.cashInTill || 0;
+        return acc;
+      }, {});
+
+      const totalDifference = sales.reduce((acc: any, sale: any) => {
+        if (!acc[sale.currency]) acc[sale.currency] = 0;
+        acc[sale.currency] += sale.difference || 0;
+        return acc;
+      }, {});
+
       // Calculate profit (sales - expenses - payroll - delivery expenses)
       const profit: any = {};
       const allCurrencies = new Set([
@@ -298,6 +311,8 @@ export default function ReportsPage() {
         totalPayroll,
         totalExpenses,
         totalDeliveryExpenses,
+        totalCashInTill,
+        totalDifference,
         profit,
         totalHours,
         salesByStore,
@@ -708,6 +723,62 @@ export default function ReportsPage() {
                     </div>
                   </div>
                 ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Cash Reconciliation */}
+          {stats?.totalCashInTill && Object.keys(stats.totalCashInTill).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Cash Reconciliation</CardTitle>
+                <CardDescription>Cash in till vs. difference summary</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Object.entries(stats.totalCashInTill).map(([currency, cashInTillAmount]: [string, any]) => {
+                  const differenceAmount = stats.totalDifference?.[currency] || 0;
+                  
+                  return (
+                    <div key={currency} className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          currency === "EUR" ? "bg-eur" : "bg-gbp"
+                        }`} />
+                        <span className="font-semibold">{currency}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Cash in Till:</span>
+                        <span className={`font-medium ${
+                          currency === "EUR" ? "text-eur" : "text-gbp"
+                        }`}>
+                          {formatCurrency(cashInTillAmount, currency as any)}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-1 border-t">
+                        <span className="text-sm font-medium">Difference:</span>
+                        <span className={`font-bold ${
+                          differenceAmount === 0 
+                            ? "text-green-600" 
+                            : differenceAmount > 0 
+                            ? "text-orange-600" 
+                            : "text-red-600"
+                        }`}>
+                          {formatCurrency(differenceAmount, currency as any)}
+                        </span>
+                      </div>
+                      
+                      {differenceAmount !== 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {differenceAmount > 0 
+                            ? "Sales recorded exceed cash in till" 
+                            : "Cash in till exceeds sales recorded"}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           )}

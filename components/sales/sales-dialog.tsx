@@ -61,6 +61,7 @@ export function SalesDialog({
   const [justEat, setJustEat] = useState(0);
   const [mylocal, setMylocal] = useState(0);
   const [creditCard, setCreditCard] = useState(0);
+  const [cashInTill, setCashInTill] = useState(0);
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
@@ -77,6 +78,7 @@ export function SalesDialog({
       setJustEat(saleToEdit.justEat);
       setMylocal(saleToEdit.mylocal);
       setCreditCard(saleToEdit.creditCard);
+      setCashInTill(saleToEdit.cashInTill || 0);
       setNotes(saleToEdit.notes || "");
     } else if (open && storeId) {
       setSelectedStoreId(storeId);
@@ -128,6 +130,7 @@ export function SalesDialog({
         setJustEat(data.sale.justEat);
         setMylocal(data.sale.mylocal);
         setCreditCard(data.sale.creditCard);
+        setCashInTill(data.sale.cashInTill || 0);
         setNotes(data.sale.notes || "");
         toast.info("Editing existing sale for this date and currency");
       } else {
@@ -169,6 +172,9 @@ export function SalesDialog({
       const url = editMode && saleId ? `/api/sales/${saleId}` : "/api/sales";
       const method = editMode && saleId ? "PATCH" : "POST";
 
+      // Calculate difference: total - cash in till
+      const difference = total - cashInTill;
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -182,6 +188,8 @@ export function SalesDialog({
           justEat,
           mylocal,
           creditCard,
+          cashInTill,
+          difference,
           notes: notes.trim(),
         }),
       });
@@ -211,6 +219,7 @@ export function SalesDialog({
     setJustEat(0);
     setMylocal(0);
     setCreditCard(0);
+    setCashInTill(0);
     setNotes("");
     setEditMode(false);
     setSaleId(null);
@@ -362,6 +371,41 @@ export function SalesDialog({
               </div>
             </div>
           )}
+
+          {/* Cash Reconciliation */}
+          <div className="space-y-3 pt-3 border-t">
+            <div className="space-y-2">
+              <Label htmlFor="cashInTill">Cash in Till</Label>
+              <CurrencyInput
+                label=""
+                value={cashInTill}
+                onChange={setCashInTill}
+                currency={selectedCurrency}
+                id="cashInTill"
+              />
+            </div>
+
+            {/* Difference (Read-only) */}
+            {(total > 0 || cashInTill > 0) && (
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Difference:</span>
+                  <span className={`text-lg font-bold ${
+                    total - cashInTill === 0 
+                      ? "text-green-600" 
+                      : total - cashInTill > 0 
+                      ? "text-orange-600" 
+                      : "text-red-600"
+                  }`}>
+                    {formatCurrency(total - cashInTill, selectedCurrency)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Total Sales - Cash in Till
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Notes */}
           <div className="space-y-2">

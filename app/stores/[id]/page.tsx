@@ -508,6 +508,29 @@ export default function StoreDetailPage() {
                             {sale.notes}
                           </div>
                         )}
+                        {/* Cash Reconciliation Info */}
+                        {((sale as any).cashInTill !== undefined && (sale as any).cashInTill !== null) && (
+                          <div className="mt-2 pt-2 border-t space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Cash in Till:</span>
+                              <span className="font-medium">
+                                {formatCurrency((sale as any).cashInTill, sale.currency as any)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Difference:</span>
+                              <span className={`font-medium ${
+                                (sale as any).difference === 0 
+                                  ? "text-green-600" 
+                                  : (sale as any).difference > 0 
+                                  ? "text-orange-600" 
+                                  : "text-red-600"
+                              }`}>
+                                {formatCurrency((sale as any).difference, sale.currency as any)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="text-right">

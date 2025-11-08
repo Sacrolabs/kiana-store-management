@@ -6679,6 +6679,8 @@ export namespace Prisma {
     mylocal: number | null
     creditCard: number | null
     total: number | null
+    cashInTill: number | null
+    difference: number | null
   }
 
   export type SaleSumAggregateOutputType = {
@@ -6689,6 +6691,8 @@ export namespace Prisma {
     mylocal: number | null
     creditCard: number | null
     total: number | null
+    cashInTill: number | null
+    difference: number | null
   }
 
   export type SaleMinAggregateOutputType = {
@@ -6703,6 +6707,8 @@ export namespace Prisma {
     mylocal: number | null
     creditCard: number | null
     total: number | null
+    cashInTill: number | null
+    difference: number | null
     notes: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -6720,6 +6726,8 @@ export namespace Prisma {
     mylocal: number | null
     creditCard: number | null
     total: number | null
+    cashInTill: number | null
+    difference: number | null
     notes: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -6737,6 +6745,8 @@ export namespace Prisma {
     mylocal: number
     creditCard: number
     total: number
+    cashInTill: number
+    difference: number
     notes: number
     createdAt: number
     updatedAt: number
@@ -6752,6 +6762,8 @@ export namespace Prisma {
     mylocal?: true
     creditCard?: true
     total?: true
+    cashInTill?: true
+    difference?: true
   }
 
   export type SaleSumAggregateInputType = {
@@ -6762,6 +6774,8 @@ export namespace Prisma {
     mylocal?: true
     creditCard?: true
     total?: true
+    cashInTill?: true
+    difference?: true
   }
 
   export type SaleMinAggregateInputType = {
@@ -6776,6 +6790,8 @@ export namespace Prisma {
     mylocal?: true
     creditCard?: true
     total?: true
+    cashInTill?: true
+    difference?: true
     notes?: true
     createdAt?: true
     updatedAt?: true
@@ -6793,6 +6809,8 @@ export namespace Prisma {
     mylocal?: true
     creditCard?: true
     total?: true
+    cashInTill?: true
+    difference?: true
     notes?: true
     createdAt?: true
     updatedAt?: true
@@ -6810,6 +6828,8 @@ export namespace Prisma {
     mylocal?: true
     creditCard?: true
     total?: true
+    cashInTill?: true
+    difference?: true
     notes?: true
     createdAt?: true
     updatedAt?: true
@@ -6914,6 +6934,8 @@ export namespace Prisma {
     mylocal: number
     creditCard: number
     total: number
+    cashInTill: number
+    difference: number
     notes: string | null
     createdAt: Date
     updatedAt: Date
@@ -6950,6 +6972,8 @@ export namespace Prisma {
     mylocal?: boolean
     creditCard?: boolean
     total?: boolean
+    cashInTill?: boolean
+    difference?: boolean
     notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -6968,6 +6992,8 @@ export namespace Prisma {
     mylocal?: boolean
     creditCard?: boolean
     total?: boolean
+    cashInTill?: boolean
+    difference?: boolean
     notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -6986,6 +7012,8 @@ export namespace Prisma {
     mylocal?: boolean
     creditCard?: boolean
     total?: boolean
+    cashInTill?: boolean
+    difference?: boolean
     notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -7004,12 +7032,14 @@ export namespace Prisma {
     mylocal?: boolean
     creditCard?: boolean
     total?: boolean
+    cashInTill?: boolean
+    difference?: boolean
     notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type SaleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "storeId" | "date" | "currency" | "cash" | "online" | "delivery" | "justEat" | "mylocal" | "creditCard" | "total" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["sale"]>
+  export type SaleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "storeId" | "date" | "currency" | "cash" | "online" | "delivery" | "justEat" | "mylocal" | "creditCard" | "total" | "cashInTill" | "difference" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["sale"]>
   export type SaleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     store?: boolean | StoreDefaultArgs<ExtArgs>
   }
@@ -7037,6 +7067,8 @@ export namespace Prisma {
       mylocal: number
       creditCard: number
       total: number
+      cashInTill: number
+      difference: number
       notes: string | null
       createdAt: Date
       updatedAt: Date
@@ -7475,6 +7507,8 @@ export namespace Prisma {
     readonly mylocal: FieldRef<"Sale", 'Int'>
     readonly creditCard: FieldRef<"Sale", 'Int'>
     readonly total: FieldRef<"Sale", 'Int'>
+    readonly cashInTill: FieldRef<"Sale", 'Int'>
+    readonly difference: FieldRef<"Sale", 'Int'>
     readonly notes: FieldRef<"Sale", 'String'>
     readonly createdAt: FieldRef<"Sale", 'DateTime'>
     readonly updatedAt: FieldRef<"Sale", 'DateTime'>
@@ -14765,6 +14799,8 @@ export namespace Prisma {
     mylocal: 'mylocal',
     creditCard: 'creditCard',
     total: 'total',
+    cashInTill: 'cashInTill',
+    difference: 'difference',
     notes: 'notes',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -15365,6 +15401,8 @@ export namespace Prisma {
     mylocal?: IntFilter<"Sale"> | number
     creditCard?: IntFilter<"Sale"> | number
     total?: IntFilter<"Sale"> | number
+    cashInTill?: IntFilter<"Sale"> | number
+    difference?: IntFilter<"Sale"> | number
     notes?: StringNullableFilter<"Sale"> | string | null
     createdAt?: DateTimeFilter<"Sale"> | Date | string
     updatedAt?: DateTimeFilter<"Sale"> | Date | string
@@ -15383,6 +15421,8 @@ export namespace Prisma {
     mylocal?: SortOrder
     creditCard?: SortOrder
     total?: SortOrder
+    cashInTill?: SortOrder
+    difference?: SortOrder
     notes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -15405,6 +15445,8 @@ export namespace Prisma {
     mylocal?: IntFilter<"Sale"> | number
     creditCard?: IntFilter<"Sale"> | number
     total?: IntFilter<"Sale"> | number
+    cashInTill?: IntFilter<"Sale"> | number
+    difference?: IntFilter<"Sale"> | number
     notes?: StringNullableFilter<"Sale"> | string | null
     createdAt?: DateTimeFilter<"Sale"> | Date | string
     updatedAt?: DateTimeFilter<"Sale"> | Date | string
@@ -15423,6 +15465,8 @@ export namespace Prisma {
     mylocal?: SortOrder
     creditCard?: SortOrder
     total?: SortOrder
+    cashInTill?: SortOrder
+    difference?: SortOrder
     notes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -15448,6 +15492,8 @@ export namespace Prisma {
     mylocal?: IntWithAggregatesFilter<"Sale"> | number
     creditCard?: IntWithAggregatesFilter<"Sale"> | number
     total?: IntWithAggregatesFilter<"Sale"> | number
+    cashInTill?: IntWithAggregatesFilter<"Sale"> | number
+    difference?: IntWithAggregatesFilter<"Sale"> | number
     notes?: StringNullableWithAggregatesFilter<"Sale"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Sale"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Sale"> | Date | string
@@ -16301,6 +16347,8 @@ export namespace Prisma {
     mylocal?: number
     creditCard?: number
     total?: number
+    cashInTill?: number
+    difference?: number
     notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -16319,6 +16367,8 @@ export namespace Prisma {
     mylocal?: number
     creditCard?: number
     total?: number
+    cashInTill?: number
+    difference?: number
     notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -16335,6 +16385,8 @@ export namespace Prisma {
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
+    cashInTill?: IntFieldUpdateOperationsInput | number
+    difference?: IntFieldUpdateOperationsInput | number
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16353,6 +16405,8 @@ export namespace Prisma {
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
+    cashInTill?: IntFieldUpdateOperationsInput | number
+    difference?: IntFieldUpdateOperationsInput | number
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16370,6 +16424,8 @@ export namespace Prisma {
     mylocal?: number
     creditCard?: number
     total?: number
+    cashInTill?: number
+    difference?: number
     notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -16386,6 +16442,8 @@ export namespace Prisma {
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
+    cashInTill?: IntFieldUpdateOperationsInput | number
+    difference?: IntFieldUpdateOperationsInput | number
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16403,6 +16461,8 @@ export namespace Prisma {
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
+    cashInTill?: IntFieldUpdateOperationsInput | number
+    difference?: IntFieldUpdateOperationsInput | number
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -17351,6 +17411,8 @@ export namespace Prisma {
     mylocal?: SortOrder
     creditCard?: SortOrder
     total?: SortOrder
+    cashInTill?: SortOrder
+    difference?: SortOrder
     notes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -17364,6 +17426,8 @@ export namespace Prisma {
     mylocal?: SortOrder
     creditCard?: SortOrder
     total?: SortOrder
+    cashInTill?: SortOrder
+    difference?: SortOrder
   }
 
   export type SaleMaxOrderByAggregateInput = {
@@ -17378,6 +17442,8 @@ export namespace Prisma {
     mylocal?: SortOrder
     creditCard?: SortOrder
     total?: SortOrder
+    cashInTill?: SortOrder
+    difference?: SortOrder
     notes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -17395,6 +17461,8 @@ export namespace Prisma {
     mylocal?: SortOrder
     creditCard?: SortOrder
     total?: SortOrder
+    cashInTill?: SortOrder
+    difference?: SortOrder
     notes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -17408,6 +17476,8 @@ export namespace Prisma {
     mylocal?: SortOrder
     creditCard?: SortOrder
     total?: SortOrder
+    cashInTill?: SortOrder
+    difference?: SortOrder
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -18716,6 +18786,8 @@ export namespace Prisma {
     mylocal?: number
     creditCard?: number
     total?: number
+    cashInTill?: number
+    difference?: number
     notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -18732,6 +18804,8 @@ export namespace Prisma {
     mylocal?: number
     creditCard?: number
     total?: number
+    cashInTill?: number
+    difference?: number
     notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -18934,6 +19008,8 @@ export namespace Prisma {
     mylocal?: IntFilter<"Sale"> | number
     creditCard?: IntFilter<"Sale"> | number
     total?: IntFilter<"Sale"> | number
+    cashInTill?: IntFilter<"Sale"> | number
+    difference?: IntFilter<"Sale"> | number
     notes?: StringNullableFilter<"Sale"> | string | null
     createdAt?: DateTimeFilter<"Sale"> | Date | string
     updatedAt?: DateTimeFilter<"Sale"> | Date | string
@@ -20163,6 +20239,8 @@ export namespace Prisma {
     mylocal?: number
     creditCard?: number
     total?: number
+    cashInTill?: number
+    difference?: number
     notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -20232,6 +20310,8 @@ export namespace Prisma {
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
+    cashInTill?: IntFieldUpdateOperationsInput | number
+    difference?: IntFieldUpdateOperationsInput | number
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20248,6 +20328,8 @@ export namespace Prisma {
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
+    cashInTill?: IntFieldUpdateOperationsInput | number
+    difference?: IntFieldUpdateOperationsInput | number
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20264,6 +20346,8 @@ export namespace Prisma {
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
+    cashInTill?: IntFieldUpdateOperationsInput | number
+    difference?: IntFieldUpdateOperationsInput | number
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
