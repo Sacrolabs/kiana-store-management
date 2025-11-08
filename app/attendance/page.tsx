@@ -258,11 +258,24 @@ export default function AttendancePage() {
                         )}
                       </div>
                       <div className="text-right text-sm">
-                        {employee.hourlyRateEur && (
-                          <div className="text-eur">€{employee.hourlyRateEur.toString()}/hr</div>
-                        )}
-                        {employee.hourlyRateGbp && (
-                          <div className="text-gbp">£{employee.hourlyRateGbp.toString()}/hr</div>
+                        {((employee as any).wageType || "HOURLY") === "HOURLY" ? (
+                          <>
+                            {employee.hourlyRateEur && (
+                              <div className="text-eur">€{employee.hourlyRateEur.toString()}/hr</div>
+                            )}
+                            {employee.hourlyRateGbp && (
+                              <div className="text-gbp">£{employee.hourlyRateGbp.toString()}/hr</div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {(employee as any).weeklyWageEur && (
+                              <div className="text-eur">€{(employee as any).weeklyWageEur.toString()}/day</div>
+                            )}
+                            {(employee as any).weeklyWageGbp && (
+                              <div className="text-gbp">£{(employee as any).weeklyWageGbp.toString()}/day</div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
