@@ -36,17 +36,17 @@ const navItems = [
     href: "/attendance",
   },
   {
-    label: "Payments",
+    label: "Pay",
     icon: Wallet,
-    href: "/payouts",
+    href: "/payments",
   },
   {
-    label: "Expenses",
+    label: "Expense",
     icon: Receipt,
     href: "/expenses",
   },
   {
-    label: "Reports",
+    label: "Report",
     icon: BarChart3,
     href: "/reports",
   },
