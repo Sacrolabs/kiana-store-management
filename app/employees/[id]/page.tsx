@@ -23,6 +23,7 @@ export default function EmployeeDetailPage() {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
 
   useEffect(() => {
     Promise.all([fetchEmployee(), fetchAttendance(), fetchPayments()]).finally(() =>
@@ -109,9 +110,38 @@ export default function EmployeeDetailPage() {
     return acc;
   }, {} as Record<string, AttendanceWithRelations[]>);
 
+  const handleAddPayment = () => {
+    setSelectedPayment(null);
+    setPaymentDialogOpen(true);
+  };
+
+  const handleEditPayment = (payment: any) => {
+    setSelectedPayment(payment);
+    setPaymentDialogOpen(true);
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    try {
+      const response = await fetch(`/api/payments/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete payment");
+      }
+
+      toast.success("Payment deleted successfully");
+      fetchPayments();
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      toast.error("Failed to delete payment");
+    }
+  };
+
   const handlePaymentSuccess = () => {
     fetchPayments();
     setPaymentDialogOpen(false);
+    setSelectedPayment(null);
   };
 
   // Determine default currency for payment dialog
@@ -244,7 +274,7 @@ export default function EmployeeDetailPage() {
               </div>
               
               <Button 
-                onClick={() => setPaymentDialogOpen(true)} 
+                onClick={handleAddPayment} 
                 className="w-full"
                 size="lg"
               >
@@ -257,6 +287,52 @@ export default function EmployeeDetailPage() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4 space-y-6">
+          {/* Payment History */}
+          {payments.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold mb-3">Payment History</h2>
+              <div className="space-y-3">
+                {payments.map((payment) => (
+                  <Card 
+                    key={payment.id} 
+                    className="p-4 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleEditPayment(payment)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">
+                          {format(new Date(payment.paidDate), "MMM dd, yyyy")}
+                        </span>
+                      </div>
+                      <div
+                        className={`text-xl font-bold ${
+                          payment.currency === "EUR" ? "text-eur" : "text-gbp"
+                        }`}
+                      >
+                        {formatCurrency(payment.amountPaid, payment.currency as any)}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div>
+                        {payment.paymentMethod === "CASH" ? "💵 Cash" : "💳 Bank Account"}
+                      </div>
+                      <div className="text-xs">
+                        {format(new Date(payment.createdAt), "HH:mm")}
+                      </div>
+                    </div>
+                    {payment.notes && (
+                      <div className="text-sm text-muted-foreground mt-2 bg-muted p-2 rounded">
+                        {payment.notes}
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Attendance Records */}
           {attendance.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <Clock className="h-12 w-12 text-muted-foreground mb-4" />
@@ -311,11 +387,16 @@ export default function EmployeeDetailPage() {
 
       <PaymentDialog
         open={paymentDialogOpen}
-        onClose={() => setPaymentDialogOpen(false)}
+        onClose={() => {
+          setPaymentDialogOpen(false);
+          setSelectedPayment(null);
+        }}
         onSuccess={handlePaymentSuccess}
         employeeId={employeeId}
         employeeName={employee.name}
         defaultCurrency={defaultCurrency as any}
+        paymentToEdit={selectedPayment}
+        onDelete={handleDeletePayment}
       />
     </AppLayout>
   );
