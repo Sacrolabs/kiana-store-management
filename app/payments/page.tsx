@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { format, startOfWeek } from "date-fns";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { PaymentDialog } from "@/components/payments/payment-dialog";
 
 interface Employee {
   id: string;
@@ -51,6 +52,8 @@ export default function PaymentsPage() {
     to: new Date(),
   });
   const [dateFilter, setDateFilter] = useState<DateFilterPreset>("week");
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -201,6 +204,35 @@ export default function PaymentsPage() {
     }
   };
 
+  const handleEditPayment = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setPaymentDialogOpen(true);
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    try {
+      const response = await fetch(`/api/payments/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete payment");
+      }
+
+      toast.success("Payment deleted successfully");
+      fetchPayments();
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      toast.error("Failed to delete payment");
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    fetchPayments();
+    setPaymentDialogOpen(false);
+    setSelectedPayment(null);
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -316,7 +348,11 @@ export default function PaymentsPage() {
                 </h2>
                 <div className="space-y-3">
                   {employeePayments.map((payment) => (
-                    <Card key={payment.id} className="overflow-hidden">
+                    <Card 
+                      key={payment.id} 
+                      className="overflow-hidden cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => handleEditPayment(payment)}
+                    >
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2">
@@ -367,6 +403,22 @@ export default function PaymentsPage() {
           )}
         </div>
       </div>
+
+      {selectedPayment && (
+        <PaymentDialog
+          open={paymentDialogOpen}
+          onClose={() => {
+            setPaymentDialogOpen(false);
+            setSelectedPayment(null);
+          }}
+          onSuccess={handlePaymentSuccess}
+          employeeId={selectedPayment.employeeId}
+          employeeName={selectedPayment.employee.name}
+          defaultCurrency={selectedPayment.currency as any}
+          paymentToEdit={selectedPayment}
+          onDelete={handleDeletePayment}
+        />
+      )}
     </AppLayout>
   );
 }

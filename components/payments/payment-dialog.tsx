@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DollarSign } from "lucide-react";
+import { DollarSign, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,8 @@ interface PaymentDialogProps {
   employeeId: string;
   employeeName: string;
   defaultCurrency?: Currency;
+  paymentToEdit?: any; // Optional: existing payment to edit
+  onDelete?: (id: string) => void; // Optional: delete callback
 }
 
 export function PaymentDialog({
@@ -42,8 +44,12 @@ export function PaymentDialog({
   employeeId,
   employeeName,
   defaultCurrency = "EUR",
+  paymentToEdit,
+  onDelete,
 }: PaymentDialogProps) {
   const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
   const [amountPaid, setAmountPaid] = useState("");
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(defaultCurrency);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ACCOUNT");
@@ -52,14 +58,27 @@ export function PaymentDialog({
 
   useEffect(() => {
     if (open) {
-      // Reset form
-      setAmountPaid("");
-      setSelectedCurrency(defaultCurrency);
-      setPaymentMethod("ACCOUNT");
-      setPaidDate(new Date().toISOString().split("T")[0]);
-      setNotes("");
+      if (paymentToEdit) {
+        // Edit mode - load existing payment data
+        setEditMode(true);
+        setPaymentId(paymentToEdit.id);
+        setAmountPaid((paymentToEdit.amountPaid / 100).toFixed(2)); // Convert from cents/pence
+        setSelectedCurrency(paymentToEdit.currency as Currency);
+        setPaymentMethod(paymentToEdit.paymentMethod as PaymentMethod);
+        setPaidDate(new Date(paymentToEdit.paidDate).toISOString().split("T")[0]);
+        setNotes(paymentToEdit.notes || "");
+      } else {
+        // Create mode - reset form
+        setEditMode(false);
+        setPaymentId(null);
+        setAmountPaid("");
+        setSelectedCurrency(defaultCurrency);
+        setPaymentMethod("ACCOUNT");
+        setPaidDate(new Date().toISOString().split("T")[0]);
+        setNotes("");
+      }
     }
-  }, [open, defaultCurrency]);
+  }, [open, defaultCurrency, paymentToEdit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,8 +108,11 @@ export function PaymentDialog({
         notes: notes.trim() || undefined,
       };
 
-      const response = await fetch("/api/payments", {
-        method: "POST",
+      const url = editMode && paymentId ? `/api/payments/${paymentId}` : "/api/payments";
+      const method = editMode && paymentId ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -100,7 +122,7 @@ export function PaymentDialog({
         throw new Error(error.error || "Failed to record payment");
       }
 
-      toast.success("Payment recorded successfully");
+      toast.success(editMode ? "Payment updated successfully" : "Payment recorded successfully");
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -117,16 +139,34 @@ export function PaymentDialog({
     }
   };
 
+  const handleDelete = async () => {
+    if (!paymentId || !onDelete) return;
+
+    if (!confirm("Are you sure you want to delete this payment record?")) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await onDelete(paymentId);
+      onClose();
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Record Payment
+            {editMode ? "Edit Payment" : "Record Payment"}
           </DialogTitle>
           <DialogDescription>
-            Record payment for {employeeName}
+            {editMode ? `Update payment for ${employeeName}` : `Record payment for ${employeeName}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -220,6 +260,18 @@ export function PaymentDialog({
           </div>
 
           <DialogFooter>
+            {editMode && paymentToEdit && onDelete && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={handleDelete}
+                disabled={saving}
+                className="mr-auto"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -229,7 +281,9 @@ export function PaymentDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Recording..." : "Record Payment"}
+              {saving 
+                ? (editMode ? "Updating..." : "Recording...") 
+                : (editMode ? "Update Payment" : "Record Payment")}
             </Button>
           </DialogFooter>
         </form>
