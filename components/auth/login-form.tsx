@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth/context";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -30,6 +31,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
+  const { refreshSession } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -70,6 +72,9 @@ export function LoginForm() {
       }
 
       toast.success("Login successful!");
+
+      // Refresh the session to update auth state
+      await refreshSession();
 
       // Redirect to stores page
       router.push("/stores");

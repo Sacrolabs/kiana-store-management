@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Employee } from "@/lib/types/employee";
 import { AttendanceWithRelations } from "@/lib/types/attendance";
+import { PaymentDialog } from "@/components/payments/payment-dialog";
 import { formatCurrency } from "@/lib/currency/utils";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -19,10 +20,12 @@ export default function EmployeeDetailPage() {
 
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [attendance, setAttendance] = useState<AttendanceWithRelations[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchEmployee(), fetchAttendance()]).finally(() =>
+    Promise.all([fetchEmployee(), fetchAttendance(), fetchPayments()]).finally(() =>
       setLoading(false)
     );
   }, [employeeId]);
@@ -51,7 +54,19 @@ export default function EmployeeDetailPage() {
     }
   };
 
-  // Calculate totals
+  const fetchPayments = async () => {
+    try {
+      const response = await fetch(`/api/payments?employeeId=${employeeId}`);
+      if (!response.ok) throw new Error("Failed to fetch payments");
+      const data = await response.json();
+      setPayments(data);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      toast.error("Failed to load payments");
+    }
+  };
+
+  // Calculate earnings totals from attendance
   const totals = attendance.reduce(
     (acc, record) => {
       if (!acc[record.currency]) {
@@ -64,6 +79,26 @@ export default function EmployeeDetailPage() {
     {} as Record<string, { amount: number; hours: number }>
   );
 
+  // Calculate payment totals
+  const paymentTotals = payments.reduce(
+    (acc, payment) => {
+      if (!acc[payment.currency]) {
+        acc[payment.currency] = 0;
+      }
+      acc[payment.currency] += payment.amountPaid;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  // Calculate remaining balance
+  const remainingBalance: Record<string, number> = {};
+  Object.keys(totals).forEach((currency) => {
+    const earned = totals[currency].amount;
+    const paid = paymentTotals[currency] || 0;
+    remainingBalance[currency] = earned - paid;
+  });
+
   // Group attendance by store
   const attendanceByStore = attendance.reduce((acc, record) => {
     const storeName = record.store.name;
@@ -73,6 +108,14 @@ export default function EmployeeDetailPage() {
     acc[storeName].push(record);
     return acc;
   }, {} as Record<string, AttendanceWithRelations[]>);
+
+  const handlePaymentSuccess = () => {
+    fetchPayments();
+    setPaymentDialogOpen(false);
+  };
+
+  // Determine default currency for payment dialog
+  const defaultCurrency = employee?.hourlyRateEur || (employee as any)?.weeklyWageEur ? "EUR" : "GBP";
 
   if (loading) {
     return (
@@ -146,31 +189,68 @@ export default function EmployeeDetailPage() {
             </div>
           </div>
 
-          {/* Totals Summary */}
+          {/* Payment Summary */}
           {Object.keys(totals).length > 0 && (
-            <div className="px-4 pb-4 flex gap-2 flex-wrap">
-              {Object.entries(totals).map(([currency, data]) => (
-                <div
-                  key={currency}
-                  className={`px-3 py-2 rounded-lg ${
-                    currency === "EUR" ? "bg-eur/10" : "bg-gbp/10"
-                  }`}
-                >
-                  <div className="text-xs font-medium text-muted-foreground">
-                    Total {currency}
+            <div className="px-4 pb-4 space-y-3">
+              <div className="flex gap-2 flex-wrap">
+                {Object.entries(totals).map(([currency, data]) => (
+                  <div key={currency} className="flex-1 min-w-[200px]">
+                    <div
+                      className={`p-3 rounded-lg border-2 ${
+                        currency === "EUR"
+                          ? "border-eur/20 bg-eur/5"
+                          : "border-gbp/20 bg-gbp/5"
+                      }`}
+                    >
+                      <div className="text-xs font-medium text-muted-foreground mb-1">
+                        Total Earnings ({currency})
+                      </div>
+                      <div
+                        className={`text-xl font-bold ${
+                          currency === "EUR" ? "text-eur" : "text-gbp"
+                        }`}
+                      >
+                        {formatCurrency(data.amount, currency as any)}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {data.hours.toFixed(2)} hours
+                      </div>
+                      
+                      <div className="mt-3 pt-3 border-t space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Total Paid:</span>
+                          <span className="font-medium">
+                            {formatCurrency(paymentTotals[currency] || 0, currency as any)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm font-semibold">
+                          <span>Remaining:</span>
+                          <span
+                            className={
+                              remainingBalance[currency] > 0
+                                ? "text-orange-600"
+                                : remainingBalance[currency] < 0
+                                ? "text-red-600"
+                                : "text-green-600"
+                            }
+                          >
+                            {formatCurrency(remainingBalance[currency] || 0, currency as any)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div
-                    className={`text-lg font-bold ${
-                      currency === "EUR" ? "text-eur" : "text-gbp"
-                    }`}
-                  >
-                    {formatCurrency(data.amount, currency as any)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {data.hours.toFixed(2)} hours
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              
+              <Button 
+                onClick={() => setPaymentDialogOpen(true)} 
+                className="w-full"
+                size="lg"
+              >
+                <DollarSign className="h-4 w-4 mr-2" />
+                Record Payment
+              </Button>
             </div>
           )}
         </div>
@@ -228,6 +308,15 @@ export default function EmployeeDetailPage() {
           )}
         </div>
       </div>
+
+      <PaymentDialog
+        open={paymentDialogOpen}
+        onClose={() => setPaymentDialogOpen(false)}
+        onSuccess={handlePaymentSuccess}
+        employeeId={employeeId}
+        employeeName={employee.name}
+        defaultCurrency={defaultCurrency as any}
+      />
     </AppLayout>
   );
 }
