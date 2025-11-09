@@ -12616,11 +12616,13 @@ export namespace Prisma {
   }
 
   export type DeliveryAvgAggregateOutputType = {
+    hoursWorked: Decimal | null
     numberOfDeliveries: number | null
     expenseAmount: number | null
   }
 
   export type DeliverySumAggregateOutputType = {
+    hoursWorked: Decimal | null
     numberOfDeliveries: number | null
     expenseAmount: number | null
   }
@@ -12630,6 +12632,9 @@ export namespace Prisma {
     driverId: string | null
     storeId: string | null
     deliveryDate: Date | null
+    checkIn: Date | null
+    checkOut: Date | null
+    hoursWorked: Decimal | null
     numberOfDeliveries: number | null
     currency: $Enums.Currency | null
     expenseAmount: number | null
@@ -12643,6 +12648,9 @@ export namespace Prisma {
     driverId: string | null
     storeId: string | null
     deliveryDate: Date | null
+    checkIn: Date | null
+    checkOut: Date | null
+    hoursWorked: Decimal | null
     numberOfDeliveries: number | null
     currency: $Enums.Currency | null
     expenseAmount: number | null
@@ -12656,6 +12664,9 @@ export namespace Prisma {
     driverId: number
     storeId: number
     deliveryDate: number
+    checkIn: number
+    checkOut: number
+    hoursWorked: number
     numberOfDeliveries: number
     currency: number
     expenseAmount: number
@@ -12667,11 +12678,13 @@ export namespace Prisma {
 
 
   export type DeliveryAvgAggregateInputType = {
+    hoursWorked?: true
     numberOfDeliveries?: true
     expenseAmount?: true
   }
 
   export type DeliverySumAggregateInputType = {
+    hoursWorked?: true
     numberOfDeliveries?: true
     expenseAmount?: true
   }
@@ -12681,6 +12694,9 @@ export namespace Prisma {
     driverId?: true
     storeId?: true
     deliveryDate?: true
+    checkIn?: true
+    checkOut?: true
+    hoursWorked?: true
     numberOfDeliveries?: true
     currency?: true
     expenseAmount?: true
@@ -12694,6 +12710,9 @@ export namespace Prisma {
     driverId?: true
     storeId?: true
     deliveryDate?: true
+    checkIn?: true
+    checkOut?: true
+    hoursWorked?: true
     numberOfDeliveries?: true
     currency?: true
     expenseAmount?: true
@@ -12707,6 +12726,9 @@ export namespace Prisma {
     driverId?: true
     storeId?: true
     deliveryDate?: true
+    checkIn?: true
+    checkOut?: true
+    hoursWorked?: true
     numberOfDeliveries?: true
     currency?: true
     expenseAmount?: true
@@ -12807,6 +12829,9 @@ export namespace Prisma {
     driverId: string
     storeId: string
     deliveryDate: Date
+    checkIn: Date
+    checkOut: Date
+    hoursWorked: Decimal
     numberOfDeliveries: number
     currency: $Enums.Currency
     expenseAmount: number
@@ -12839,6 +12864,9 @@ export namespace Prisma {
     driverId?: boolean
     storeId?: boolean
     deliveryDate?: boolean
+    checkIn?: boolean
+    checkOut?: boolean
+    hoursWorked?: boolean
     numberOfDeliveries?: boolean
     currency?: boolean
     expenseAmount?: boolean
@@ -12854,6 +12882,9 @@ export namespace Prisma {
     driverId?: boolean
     storeId?: boolean
     deliveryDate?: boolean
+    checkIn?: boolean
+    checkOut?: boolean
+    hoursWorked?: boolean
     numberOfDeliveries?: boolean
     currency?: boolean
     expenseAmount?: boolean
@@ -12869,6 +12900,9 @@ export namespace Prisma {
     driverId?: boolean
     storeId?: boolean
     deliveryDate?: boolean
+    checkIn?: boolean
+    checkOut?: boolean
+    hoursWorked?: boolean
     numberOfDeliveries?: boolean
     currency?: boolean
     expenseAmount?: boolean
@@ -12884,6 +12918,9 @@ export namespace Prisma {
     driverId?: boolean
     storeId?: boolean
     deliveryDate?: boolean
+    checkIn?: boolean
+    checkOut?: boolean
+    hoursWorked?: boolean
     numberOfDeliveries?: boolean
     currency?: boolean
     expenseAmount?: boolean
@@ -12892,7 +12929,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type DeliveryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "driverId" | "storeId" | "deliveryDate" | "numberOfDeliveries" | "currency" | "expenseAmount" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["delivery"]>
+  export type DeliveryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "driverId" | "storeId" | "deliveryDate" | "checkIn" | "checkOut" | "hoursWorked" | "numberOfDeliveries" | "currency" | "expenseAmount" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["delivery"]>
   export type DeliveryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     driver?: boolean | DriverDefaultArgs<ExtArgs>
     store?: boolean | StoreDefaultArgs<ExtArgs>
@@ -12917,6 +12954,9 @@ export namespace Prisma {
       driverId: string
       storeId: string
       deliveryDate: Date
+      checkIn: Date
+      checkOut: Date
+      hoursWorked: Prisma.Decimal
       numberOfDeliveries: number
       currency: $Enums.Currency
       expenseAmount: number
@@ -13352,6 +13392,9 @@ export namespace Prisma {
     readonly driverId: FieldRef<"Delivery", 'String'>
     readonly storeId: FieldRef<"Delivery", 'String'>
     readonly deliveryDate: FieldRef<"Delivery", 'DateTime'>
+    readonly checkIn: FieldRef<"Delivery", 'DateTime'>
+    readonly checkOut: FieldRef<"Delivery", 'DateTime'>
+    readonly hoursWorked: FieldRef<"Delivery", 'Decimal'>
     readonly numberOfDeliveries: FieldRef<"Delivery", 'Int'>
     readonly currency: FieldRef<"Delivery", 'Currency'>
     readonly expenseAmount: FieldRef<"Delivery", 'Int'>
@@ -16155,6 +16198,9 @@ export namespace Prisma {
     driverId: 'driverId',
     storeId: 'storeId',
     deliveryDate: 'deliveryDate',
+    checkIn: 'checkIn',
+    checkOut: 'checkOut',
+    hoursWorked: 'hoursWorked',
     numberOfDeliveries: 'numberOfDeliveries',
     currency: 'currency',
     expenseAmount: 'expenseAmount',
@@ -17125,6 +17171,9 @@ export namespace Prisma {
     driverId?: StringFilter<"Delivery"> | string
     storeId?: StringFilter<"Delivery"> | string
     deliveryDate?: DateTimeFilter<"Delivery"> | Date | string
+    checkIn?: DateTimeFilter<"Delivery"> | Date | string
+    checkOut?: DateTimeFilter<"Delivery"> | Date | string
+    hoursWorked?: DecimalFilter<"Delivery"> | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFilter<"Delivery"> | number
     currency?: EnumCurrencyFilter<"Delivery"> | $Enums.Currency
     expenseAmount?: IntFilter<"Delivery"> | number
@@ -17140,6 +17189,9 @@ export namespace Prisma {
     driverId?: SortOrder
     storeId?: SortOrder
     deliveryDate?: SortOrder
+    checkIn?: SortOrder
+    checkOut?: SortOrder
+    hoursWorked?: SortOrder
     numberOfDeliveries?: SortOrder
     currency?: SortOrder
     expenseAmount?: SortOrder
@@ -17158,6 +17210,9 @@ export namespace Prisma {
     driverId?: StringFilter<"Delivery"> | string
     storeId?: StringFilter<"Delivery"> | string
     deliveryDate?: DateTimeFilter<"Delivery"> | Date | string
+    checkIn?: DateTimeFilter<"Delivery"> | Date | string
+    checkOut?: DateTimeFilter<"Delivery"> | Date | string
+    hoursWorked?: DecimalFilter<"Delivery"> | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFilter<"Delivery"> | number
     currency?: EnumCurrencyFilter<"Delivery"> | $Enums.Currency
     expenseAmount?: IntFilter<"Delivery"> | number
@@ -17173,6 +17228,9 @@ export namespace Prisma {
     driverId?: SortOrder
     storeId?: SortOrder
     deliveryDate?: SortOrder
+    checkIn?: SortOrder
+    checkOut?: SortOrder
+    hoursWorked?: SortOrder
     numberOfDeliveries?: SortOrder
     currency?: SortOrder
     expenseAmount?: SortOrder
@@ -17194,6 +17252,9 @@ export namespace Prisma {
     driverId?: StringWithAggregatesFilter<"Delivery"> | string
     storeId?: StringWithAggregatesFilter<"Delivery"> | string
     deliveryDate?: DateTimeWithAggregatesFilter<"Delivery"> | Date | string
+    checkIn?: DateTimeWithAggregatesFilter<"Delivery"> | Date | string
+    checkOut?: DateTimeWithAggregatesFilter<"Delivery"> | Date | string
+    hoursWorked?: DecimalWithAggregatesFilter<"Delivery"> | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntWithAggregatesFilter<"Delivery"> | number
     currency?: EnumCurrencyWithAggregatesFilter<"Delivery"> | $Enums.Currency
     expenseAmount?: IntWithAggregatesFilter<"Delivery"> | number
@@ -18185,6 +18246,9 @@ export namespace Prisma {
   export type DeliveryCreateInput = {
     id?: string
     deliveryDate: Date | string
+    checkIn: Date | string
+    checkOut: Date | string
+    hoursWorked: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -18200,6 +18264,9 @@ export namespace Prisma {
     driverId: string
     storeId: string
     deliveryDate: Date | string
+    checkIn: Date | string
+    checkOut: Date | string
+    hoursWorked: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -18211,6 +18278,9 @@ export namespace Prisma {
   export type DeliveryUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     deliveryDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkIn?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkOut?: DateTimeFieldUpdateOperationsInput | Date | string
+    hoursWorked?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFieldUpdateOperationsInput | number
     currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
     expenseAmount?: IntFieldUpdateOperationsInput | number
@@ -18226,6 +18296,9 @@ export namespace Prisma {
     driverId?: StringFieldUpdateOperationsInput | string
     storeId?: StringFieldUpdateOperationsInput | string
     deliveryDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkIn?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkOut?: DateTimeFieldUpdateOperationsInput | Date | string
+    hoursWorked?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFieldUpdateOperationsInput | number
     currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
     expenseAmount?: IntFieldUpdateOperationsInput | number
@@ -18239,6 +18312,9 @@ export namespace Prisma {
     driverId: string
     storeId: string
     deliveryDate: Date | string
+    checkIn: Date | string
+    checkOut: Date | string
+    hoursWorked: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -18250,6 +18326,9 @@ export namespace Prisma {
   export type DeliveryUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     deliveryDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkIn?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkOut?: DateTimeFieldUpdateOperationsInput | Date | string
+    hoursWorked?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFieldUpdateOperationsInput | number
     currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
     expenseAmount?: IntFieldUpdateOperationsInput | number
@@ -18263,6 +18342,9 @@ export namespace Prisma {
     driverId?: StringFieldUpdateOperationsInput | string
     storeId?: StringFieldUpdateOperationsInput | string
     deliveryDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkIn?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkOut?: DateTimeFieldUpdateOperationsInput | Date | string
+    hoursWorked?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFieldUpdateOperationsInput | number
     currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
     expenseAmount?: IntFieldUpdateOperationsInput | number
@@ -19208,6 +19290,9 @@ export namespace Prisma {
     driverId?: SortOrder
     storeId?: SortOrder
     deliveryDate?: SortOrder
+    checkIn?: SortOrder
+    checkOut?: SortOrder
+    hoursWorked?: SortOrder
     numberOfDeliveries?: SortOrder
     currency?: SortOrder
     expenseAmount?: SortOrder
@@ -19217,6 +19302,7 @@ export namespace Prisma {
   }
 
   export type DeliveryAvgOrderByAggregateInput = {
+    hoursWorked?: SortOrder
     numberOfDeliveries?: SortOrder
     expenseAmount?: SortOrder
   }
@@ -19226,6 +19312,9 @@ export namespace Prisma {
     driverId?: SortOrder
     storeId?: SortOrder
     deliveryDate?: SortOrder
+    checkIn?: SortOrder
+    checkOut?: SortOrder
+    hoursWorked?: SortOrder
     numberOfDeliveries?: SortOrder
     currency?: SortOrder
     expenseAmount?: SortOrder
@@ -19239,6 +19328,9 @@ export namespace Prisma {
     driverId?: SortOrder
     storeId?: SortOrder
     deliveryDate?: SortOrder
+    checkIn?: SortOrder
+    checkOut?: SortOrder
+    hoursWorked?: SortOrder
     numberOfDeliveries?: SortOrder
     currency?: SortOrder
     expenseAmount?: SortOrder
@@ -19248,6 +19340,7 @@ export namespace Prisma {
   }
 
   export type DeliverySumOrderByAggregateInput = {
+    hoursWorked?: SortOrder
     numberOfDeliveries?: SortOrder
     expenseAmount?: SortOrder
   }
@@ -20574,6 +20667,9 @@ export namespace Prisma {
   export type DeliveryCreateWithoutStoreInput = {
     id?: string
     deliveryDate: Date | string
+    checkIn: Date | string
+    checkOut: Date | string
+    hoursWorked: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -20587,6 +20683,9 @@ export namespace Prisma {
     id?: string
     driverId: string
     deliveryDate: Date | string
+    checkIn: Date | string
+    checkOut: Date | string
+    hoursWorked: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -20788,6 +20887,9 @@ export namespace Prisma {
     driverId?: StringFilter<"Delivery"> | string
     storeId?: StringFilter<"Delivery"> | string
     deliveryDate?: DateTimeFilter<"Delivery"> | Date | string
+    checkIn?: DateTimeFilter<"Delivery"> | Date | string
+    checkOut?: DateTimeFilter<"Delivery"> | Date | string
+    hoursWorked?: DecimalFilter<"Delivery"> | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFilter<"Delivery"> | number
     currency?: EnumCurrencyFilter<"Delivery"> | $Enums.Currency
     expenseAmount?: IntFilter<"Delivery"> | number
@@ -21558,6 +21660,9 @@ export namespace Prisma {
   export type DeliveryCreateWithoutDriverInput = {
     id?: string
     deliveryDate: Date | string
+    checkIn: Date | string
+    checkOut: Date | string
+    hoursWorked: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -21571,6 +21676,9 @@ export namespace Prisma {
     id?: string
     storeId: string
     deliveryDate: Date | string
+    checkIn: Date | string
+    checkOut: Date | string
+    hoursWorked: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -22070,6 +22178,9 @@ export namespace Prisma {
     id?: string
     driverId: string
     deliveryDate: Date | string
+    checkIn: Date | string
+    checkOut: Date | string
+    hoursWorked: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -22258,6 +22369,9 @@ export namespace Prisma {
   export type DeliveryUpdateWithoutStoreInput = {
     id?: StringFieldUpdateOperationsInput | string
     deliveryDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkIn?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkOut?: DateTimeFieldUpdateOperationsInput | Date | string
+    hoursWorked?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFieldUpdateOperationsInput | number
     currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
     expenseAmount?: IntFieldUpdateOperationsInput | number
@@ -22271,6 +22385,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     driverId?: StringFieldUpdateOperationsInput | string
     deliveryDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkIn?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkOut?: DateTimeFieldUpdateOperationsInput | Date | string
+    hoursWorked?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFieldUpdateOperationsInput | number
     currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
     expenseAmount?: IntFieldUpdateOperationsInput | number
@@ -22283,6 +22400,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     driverId?: StringFieldUpdateOperationsInput | string
     deliveryDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkIn?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkOut?: DateTimeFieldUpdateOperationsInput | Date | string
+    hoursWorked?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFieldUpdateOperationsInput | number
     currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
     expenseAmount?: IntFieldUpdateOperationsInput | number
@@ -22471,6 +22591,9 @@ export namespace Prisma {
     id?: string
     storeId: string
     deliveryDate: Date | string
+    checkIn: Date | string
+    checkOut: Date | string
+    hoursWorked: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -22490,6 +22613,9 @@ export namespace Prisma {
   export type DeliveryUpdateWithoutDriverInput = {
     id?: StringFieldUpdateOperationsInput | string
     deliveryDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkIn?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkOut?: DateTimeFieldUpdateOperationsInput | Date | string
+    hoursWorked?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFieldUpdateOperationsInput | number
     currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
     expenseAmount?: IntFieldUpdateOperationsInput | number
@@ -22503,6 +22629,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     storeId?: StringFieldUpdateOperationsInput | string
     deliveryDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkIn?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkOut?: DateTimeFieldUpdateOperationsInput | Date | string
+    hoursWorked?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFieldUpdateOperationsInput | number
     currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
     expenseAmount?: IntFieldUpdateOperationsInput | number
@@ -22515,6 +22644,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     storeId?: StringFieldUpdateOperationsInput | string
     deliveryDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkIn?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkOut?: DateTimeFieldUpdateOperationsInput | Date | string
+    hoursWorked?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     numberOfDeliveries?: IntFieldUpdateOperationsInput | number
     currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
     expenseAmount?: IntFieldUpdateOperationsInput | number

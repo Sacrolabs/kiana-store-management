@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
-import { Currency } from "@/lib/generated/prisma";
+import { Currency, Prisma } from "@/lib/generated/prisma";
 
 // GET /api/deliveries/[id]
 export async function GET(
@@ -34,7 +34,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
-    const { driverId, storeId, deliveryDate, numberOfDeliveries, currency, expenseAmount, notes } = body;
+    const { driverId, storeId, deliveryDate, checkIn, checkOut, hoursWorked, numberOfDeliveries, currency, expenseAmount, notes } = body;
 
     // Check if delivery exists
     const existing = await prisma.delivery.findUnique({
@@ -46,6 +46,13 @@ export async function PATCH(
     }
 
     // Validation for updated fields
+    if (hoursWorked !== undefined && hoursWorked < 0) {
+      return NextResponse.json(
+        { error: "Hours worked must be a non-negative number" },
+        { status: 400 }
+      );
+    }
+
     if (numberOfDeliveries !== undefined && numberOfDeliveries < 0) {
       return NextResponse.json(
         { error: "Number of deliveries must be a positive number" },
@@ -94,6 +101,9 @@ export async function PATCH(
         ...(driverId && { driverId }),
         ...(storeId && { storeId }),
         ...(deliveryDate && { deliveryDate: new Date(deliveryDate) }),
+        ...(checkIn && { checkIn: new Date(checkIn) }),
+        ...(checkOut && { checkOut: new Date(checkOut) }),
+        ...(hoursWorked !== undefined && { hoursWorked: new Prisma.Decimal(hoursWorked) }),
         ...(numberOfDeliveries !== undefined && { numberOfDeliveries }),
         ...(currency && { currency: currency as Currency }),
         ...(expenseAmount !== undefined && { expenseAmount }),

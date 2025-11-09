@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Truck } from "lucide-react";
+import { Truck, Trash2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,7 @@ interface DeliveryDialogProps {
   stores: Store[];
   storeId?: string; // Optional: pre-select a store
   deliveryToEdit?: any; // Optional: existing delivery to edit
+  onDelete?: (id: string) => void; // Optional: delete callback
 }
 
 export function DeliveryDialog({
@@ -44,6 +45,7 @@ export function DeliveryDialog({
   stores,
   storeId,
   deliveryToEdit,
+  onDelete,
 }: DeliveryDialogProps) {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [storeDrivers, setStoreDrivers] = useState<Driver[]>([]);
@@ -55,10 +57,34 @@ export function DeliveryDialog({
   const [selectedStoreId, setSelectedStoreId] = useState(storeId || "");
   const [selectedDriverId, setSelectedDriverId] = useState("");
   const [deliveryDate, setDeliveryDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [checkInDate, setCheckInDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [checkInTime, setCheckInTime] = useState("09:00");
+  const [checkOutDate, setCheckOutDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [checkOutTime, setCheckOutTime] = useState("17:00");
   const [numberOfDeliveries, setNumberOfDeliveries] = useState("");
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("EUR");
   const [expenseAmount, setExpenseAmount] = useState(0);
   const [notes, setNotes] = useState("");
+
+  // Calculate hours worked
+  const calculateHours = (): number => {
+    try {
+      const checkIn = new Date(`${checkInDate}T${checkInTime}`);
+      const checkOut = new Date(`${checkOutDate}T${checkOutTime}`);
+      
+      if (checkOut <= checkIn) {
+        return 0;
+      }
+      
+      const diffMs = checkOut.getTime() - checkIn.getTime();
+      const hours = diffMs / (1000 * 60 * 60);
+      return Math.round(hours * 100) / 100; // Round to 2 decimal places
+    } catch (error) {
+      return 0;
+    }
+  };
+
+  const hoursWorked = calculateHours();
 
   useEffect(() => {
     if (open) {
@@ -92,6 +118,21 @@ export function DeliveryDialog({
       setSelectedStoreId(deliveryToEdit.storeId);
       setSelectedDriverId(deliveryToEdit.driverId);
       setDeliveryDate(format(new Date(deliveryToEdit.deliveryDate), "yyyy-MM-dd"));
+      
+      // Set check-in date and time
+      if (deliveryToEdit.checkIn) {
+        const checkInDateTime = new Date(deliveryToEdit.checkIn);
+        setCheckInDate(format(checkInDateTime, "yyyy-MM-dd"));
+        setCheckInTime(format(checkInDateTime, "HH:mm"));
+      }
+      
+      // Set check-out date and time
+      if (deliveryToEdit.checkOut) {
+        const checkOutDateTime = new Date(deliveryToEdit.checkOut);
+        setCheckOutDate(format(checkOutDateTime, "yyyy-MM-dd"));
+        setCheckOutTime(format(checkOutDateTime, "HH:mm"));
+      }
+      
       setNumberOfDeliveries(String(deliveryToEdit.numberOfDeliveries));
       setSelectedCurrency(deliveryToEdit.currency as Currency);
       setExpenseAmount(deliveryToEdit.expenseAmount);
@@ -155,6 +196,9 @@ export function DeliveryDialog({
       const url = editMode && deliveryId ? `/api/deliveries/${deliveryId}` : "/api/deliveries";
       const method = editMode && deliveryId ? "PATCH" : "POST";
 
+      const checkIn = new Date(`${checkInDate}T${checkInTime}`);
+      const checkOut = new Date(`${checkOutDate}T${checkOutTime}`);
+      
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -162,6 +206,9 @@ export function DeliveryDialog({
           driverId: selectedDriverId,
           storeId: selectedStoreId,
           deliveryDate: new Date(deliveryDate).toISOString(),
+          checkIn: checkIn.toISOString(),
+          checkOut: checkOut.toISOString(),
+          hoursWorked,
           numberOfDeliveries: parseInt(numberOfDeliveries),
           currency: selectedCurrency,
           expenseAmount, // Already in cents/pence from CurrencyInput
@@ -185,10 +232,30 @@ export function DeliveryDialog({
     }
   };
 
+  const handleDelete = async () => {
+    if (!deliveryId || !onDelete) return;
+    
+    if (!confirm("Are you sure you want to delete this delivery record?")) return;
+    
+    try {
+      setSaving(true);
+      await onDelete(deliveryId);
+      handleClose();
+    } catch (error) {
+      console.error("Error deleting delivery:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleClose = () => {
     setSelectedStoreId(storeId || "");
     setSelectedDriverId("");
     setDeliveryDate(format(new Date(), "yyyy-MM-dd"));
+    setCheckInDate(format(new Date(), "yyyy-MM-dd"));
+    setCheckInTime("09:00");
+    setCheckOutDate(format(new Date(), "yyyy-MM-dd"));
+    setCheckOutTime("17:00");
     setNumberOfDeliveries("");
     setSelectedCurrency("EUR");
     setExpenseAmount(0);
@@ -272,6 +339,67 @@ export function DeliveryDialog({
             />
           </div>
 
+          {/* Check-In Date and Time */}
+          <div className="space-y-2">
+            <Label>Check-In *</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Input
+                  type="date"
+                  value={checkInDate}
+                  onChange={(e) => setCheckInDate(e.target.value)}
+                  max={format(new Date(), "yyyy-MM-dd")}
+                  required
+                />
+              </div>
+              <div>
+                <Input
+                  type="time"
+                  value={checkInTime}
+                  onChange={(e) => setCheckInTime(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Check-Out Date and Time */}
+          <div className="space-y-2">
+            <Label>Check-Out *</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Input
+                  type="date"
+                  value={checkOutDate}
+                  onChange={(e) => setCheckOutDate(e.target.value)}
+                  max={format(new Date(), "yyyy-MM-dd")}
+                  required
+                />
+              </div>
+              <div>
+                <Input
+                  type="time"
+                  value={checkOutTime}
+                  onChange={(e) => setCheckOutTime(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Hours Worked Display */}
+          {hoursWorked > 0 && (
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Hours Worked:</span>
+                </div>
+                <span className="text-lg font-bold">{hoursWorked.toFixed(2)}h</span>
+              </div>
+            </div>
+          )}
+
           {/* Number of Deliveries */}
           <div className="space-y-2">
             <Label htmlFor="numberOfDeliveries">Number of Deliveries *</Label>
@@ -346,6 +474,18 @@ export function DeliveryDialog({
 
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-4">
+            {editMode && deliveryToEdit && onDelete && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={handleDelete}
+                disabled={saving}
+                className="mr-auto"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"

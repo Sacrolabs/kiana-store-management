@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
-import { Currency } from "@/lib/generated/prisma";
+import { Currency, Prisma } from "@/lib/generated/prisma";
 
 // GET /api/deliveries - List delivery records with optional filters
 export async function GET(request: NextRequest) {
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { driverId, storeId, deliveryDate, numberOfDeliveries, currency, expenseAmount, notes } = body;
+    const { driverId, storeId, deliveryDate, checkIn, checkOut, hoursWorked, numberOfDeliveries, currency, expenseAmount, notes } = body;
 
     // Validation
     if (!driverId) {
@@ -86,6 +86,27 @@ export async function POST(request: NextRequest) {
     if (!deliveryDate) {
       return NextResponse.json(
         { error: "Delivery date is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!checkIn) {
+      return NextResponse.json(
+        { error: "Check-in time is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!checkOut) {
+      return NextResponse.json(
+        { error: "Check-out time is required" },
+        { status: 400 }
+      );
+    }
+
+    if (hoursWorked === undefined || hoursWorked < 0) {
+      return NextResponse.json(
+        { error: "Hours worked must be a non-negative number" },
         { status: 400 }
       );
     }
@@ -148,6 +169,9 @@ export async function POST(request: NextRequest) {
         driverId,
         storeId,
         deliveryDate: new Date(deliveryDate),
+        checkIn: new Date(checkIn),
+        checkOut: new Date(checkOut),
+        hoursWorked: new Prisma.Decimal(hoursWorked),
         numberOfDeliveries,
         currency: currency as Currency,
         expenseAmount, // Already in cents/pence from frontend
