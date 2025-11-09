@@ -10,8 +10,9 @@ const protectedRoutes = [
   "/expenses",
   "/reports",
   "/employees",
-  "/settings",
   "/admins",
+  "/payments",
+  "/drivers",
 ];
 
 // Define public routes that don't require authentication

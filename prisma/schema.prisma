@@ -33,6 +33,11 @@ enum WageType {
   FIXED
 }
 
+enum PaymentMethod {
+  CASH
+  ACCOUNT
+}
+
 model User {
   id                String    @id @default(uuid())
   email             String    @unique
@@ -85,6 +90,7 @@ model Employee {
 
   attendance Attendance[]
   stores     StoreEmployee[]
+  payments   Payment[]
 
   @@map("employees")
 }
@@ -256,4 +262,23 @@ model StoreDriver {
   @@index([storeId])
   @@index([driverId])
   @@map("store_drivers")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  employeeId    String        @map("employee_id")
+  amountPaid    Int           @map("amount_paid") // Stored in cents/pence
+  currency      Currency      @default(EUR)
+  paymentMethod PaymentMethod @default(ACCOUNT) @map("payment_method")
+  paidDate      DateTime      @map("paid_date")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@index([paidDate])
+  @@index([currency])
+  @@map("payments")
 }
