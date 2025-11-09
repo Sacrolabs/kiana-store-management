@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, TrendingUp, Receipt, Users, Edit, Plus, CheckCircle, Pencil, XCircle, Truck } from "lucide-react";
+import { ArrowLeft, TrendingUp, Receipt, Users, Edit, Plus, CheckCircle, Pencil, XCircle, Truck, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -302,6 +302,24 @@ export default function StoreDetailPage() {
   const handleEditDelivery = (delivery: DeliveryWithRelations) => {
     setDeliveryToEdit(delivery);
     setDeliveryDialogOpen(true);
+  };
+
+  const handleDeleteDelivery = async (id: string) => {
+    try {
+      const response = await fetch(`/api/deliveries/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete delivery");
+      }
+
+      toast.success("Delivery deleted successfully");
+      fetchDeliveries();
+    } catch (error) {
+      console.error("Error deleting delivery:", error);
+      toast.error("Failed to delete delivery");
+    }
   };
 
   const handleCloseDeliveryDialog = () => {
@@ -751,9 +769,20 @@ export default function StoreDetailPage() {
                         <div className="text-sm text-muted-foreground">
                           {format(new Date(delivery.deliveryDate), "MMM dd, yyyy")}
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {delivery.numberOfDeliveries} deliveries
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <span>{delivery.numberOfDeliveries} deliveries</span>
+                          {(delivery as any).hoursWorked && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {parseFloat((delivery as any).hoursWorked.toString()).toFixed(2)}h
+                            </span>
+                          )}
                         </div>
+                        {(delivery as any).checkIn && (delivery as any).checkOut && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {format(new Date((delivery as any).checkIn), "HH:mm")} - {format(new Date((delivery as any).checkOut), "HH:mm")}
+                          </div>
+                        )}
                         {delivery.notes && (
                           <div className="text-sm text-muted-foreground mt-1">
                             {delivery.notes}
@@ -923,6 +952,7 @@ export default function StoreDetailPage() {
           stores={[store]}
           storeId={storeId}
           deliveryToEdit={deliveryToEdit}
+          onDelete={handleDeleteDelivery}
         />
       )}
 

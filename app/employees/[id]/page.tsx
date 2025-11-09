@@ -1,17 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Clock, Calendar, DollarSign } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, DollarSign, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Employee } from "@/lib/types/employee";
 import { AttendanceWithRelations } from "@/lib/types/attendance";
 import { PaymentDialog } from "@/components/payments/payment-dialog";
+import { DateFilter, DateRange, DateFilterPreset } from "@/components/common/date-filter";
 import { formatCurrency } from "@/lib/currency/utils";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfDay, startOfDay, startOfMonth, startOfYear, subMonths, subYears } from "date-fns";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export default function EmployeeDetailPage() {
   const params = useParams();
@@ -24,6 +27,16 @@ export default function EmployeeDetailPage() {
   const [loading, setLoading] = useState(true);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: startOfMonth(new Date()),
+    to: endOfDay(new Date()),
+  });
+  const [dateFilter, setDateFilter] = useState<DateFilterPreset>("month");
+  const [downloadingPayments, setDownloadingPayments] = useState(false);
+  const [downloadingAttendance, setDownloadingAttendance] = useState(false);
+
+  const paymentRef = useRef<HTMLDivElement>(null);
+  const attendanceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     Promise.all([fetchEmployee(), fetchAttendance(), fetchPayments()]).finally(() =>
@@ -100,16 +113,6 @@ export default function EmployeeDetailPage() {
     remainingBalance[currency] = earned - paid;
   });
 
-  // Group attendance by store
-  const attendanceByStore = attendance.reduce((acc, record) => {
-    const storeName = record.store.name;
-    if (!acc[storeName]) {
-      acc[storeName] = [];
-    }
-    acc[storeName].push(record);
-    return acc;
-  }, {} as Record<string, AttendanceWithRelations[]>);
-
   const handleAddPayment = () => {
     setSelectedPayment(null);
     setPaymentDialogOpen(true);
@@ -142,6 +145,163 @@ export default function EmployeeDetailPage() {
     fetchPayments();
     setPaymentDialogOpen(false);
     setSelectedPayment(null);
+  };
+
+  // Filter payments by date range
+  const filteredPayments = payments.filter((payment) => {
+    const paymentDate = new Date(payment.paidDate);
+    return paymentDate >= dateRange.from && paymentDate <= dateRange.to;
+  });
+
+  // Filter attendance by date range
+  const filteredAttendance = attendance.filter((record) => {
+    const checkInDate = new Date(record.checkIn);
+    return checkInDate >= dateRange.from && checkInDate <= dateRange.to;
+  });
+
+  // Calculate totals for filtered data
+  const filteredTotals = filteredAttendance.reduce(
+    (acc, record) => {
+      if (!acc[record.currency]) {
+        acc[record.currency] = { amount: 0, hours: 0 };
+      }
+      acc[record.currency].amount += record.amountToPay;
+      acc[record.currency].hours += parseFloat(record.hoursWorked.toString());
+      return acc;
+    },
+    {} as Record<string, { amount: number; hours: number }>
+  );
+
+  // Calculate filtered payment totals
+  const filteredPaymentTotals = filteredPayments.reduce(
+    (acc, payment) => {
+      if (!acc[payment.currency]) {
+        acc[payment.currency] = 0;
+      }
+      acc[payment.currency] += payment.amountPaid;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  // Calculate filtered remaining balance
+  const filteredRemainingBalance: Record<string, number> = {};
+  Object.keys(filteredTotals).forEach((currency) => {
+    const earned = filteredTotals[currency].amount;
+    const paid = filteredPaymentTotals[currency] || 0;
+    filteredRemainingBalance[currency] = earned - paid;
+  });
+
+  // Group attendance by store (using filtered data)
+  const attendanceByStore = filteredAttendance.reduce((acc, record) => {
+    const storeName = record.store.name;
+    if (!acc[storeName]) {
+      acc[storeName] = [];
+    }
+    acc[storeName].push(record);
+    return acc;
+  }, {} as Record<string, AttendanceWithRelations[]>);
+
+  // Download payment records as PDF
+  const downloadPaymentsPDF = async () => {
+    if (!paymentRef.current || !employee) return;
+
+    try {
+      setDownloadingPayments(true);
+      toast.info("Generating PDF...");
+
+      const fromDate = format(dateRange.from, "dd-MMM-yyyy");
+      const toDate = format(dateRange.to, "dd-MMM-yyyy");
+      const filename = `Payments_${employee.name.replace(/\s+/g, "_")}_${format(dateRange.from, "ddMMMyyyy")}-${format(dateRange.to, "ddMMMyyyy")}.pdf`;
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = 210;
+      const margin = 15;
+
+      // Add header
+      pdf.setFontSize(20);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Payment Records", margin, 20);
+
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Employee: ${employee.name} | Period: ${fromDate} to ${toDate}`, margin, 28);
+      pdf.text(`Generated on: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, margin, 33);
+
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, 36, pageWidth - margin, 36);
+
+      const canvas = await html2canvas(paymentRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgWidth = pageWidth - 2 * margin;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL("image/png");
+
+      pdf.addImage(imgData, "PNG", margin, 45, imgWidth, imgHeight);
+      pdf.save(filename);
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+    } finally {
+      setDownloadingPayments(false);
+    }
+  };
+
+  // Download attendance records as PDF
+  const downloadAttendancePDF = async () => {
+    if (!attendanceRef.current || !employee) return;
+
+    try {
+      setDownloadingAttendance(true);
+      toast.info("Generating PDF...");
+
+      const fromDate = format(dateRange.from, "dd-MMM-yyyy");
+      const toDate = format(dateRange.to, "dd-MMM-yyyy");
+      const filename = `Attendance_${employee.name.replace(/\s+/g, "_")}_${format(dateRange.from, "ddMMMyyyy")}-${format(dateRange.to, "ddMMMyyyy")}.pdf`;
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = 210;
+      const margin = 15;
+
+      // Add header
+      pdf.setFontSize(20);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Attendance Records", margin, 20);
+
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Employee: ${employee.name} | Period: ${fromDate} to ${toDate}`, margin, 28);
+      pdf.text(`Generated on: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, margin, 33);
+
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, 36, pageWidth - margin, 36);
+
+      const canvas = await html2canvas(attendanceRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgWidth = pageWidth - 2 * margin;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL("image/png");
+
+      pdf.addImage(imgData, "PNG", margin, 45, imgWidth, imgHeight);
+      pdf.save(filename);
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+    } finally {
+      setDownloadingAttendance(false);
+    }
   };
 
   // Determine default currency for payment dialog
@@ -219,11 +379,44 @@ export default function EmployeeDetailPage() {
             </div>
           </div>
 
+          {/* Date Filter and Download Buttons */}
+          <div className="px-4 pb-4 space-y-3">
+            <DateFilter
+              value={dateRange}
+              onChange={setDateRange}
+              preset={dateFilter}
+              onPresetChange={setDateFilter}
+            />
+            
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={downloadPaymentsPDF}
+                disabled={downloadingPayments || filteredPayments.length === 0}
+                variant="outline"
+                className="gap-2"
+                size="sm"
+              >
+                <Download className="h-4 w-4" />
+                {downloadingPayments ? "Generating..." : "Payments PDF"}
+              </Button>
+              <Button
+                onClick={downloadAttendancePDF}
+                disabled={downloadingAttendance || filteredAttendance.length === 0}
+                variant="outline"
+                className="gap-2"
+                size="sm"
+              >
+                <Download className="h-4 w-4" />
+                {downloadingAttendance ? "Generating..." : "Attendance PDF"}
+              </Button>
+            </div>
+          </div>
+
           {/* Payment Summary */}
-          {Object.keys(totals).length > 0 && (
+          {Object.keys(filteredTotals).length > 0 && (
             <div className="px-4 pb-4 space-y-3">
               <div className="flex gap-2 flex-wrap">
-                {Object.entries(totals).map(([currency, data]) => (
+                {Object.entries(filteredTotals).map(([currency, data]) => (
                   <div key={currency} className="flex-1 min-w-[200px]">
                     <div
                       className={`p-3 rounded-lg border-2 ${
@@ -250,21 +443,21 @@ export default function EmployeeDetailPage() {
                         <div className="flex justify-between text-xs">
                           <span className="text-muted-foreground">Total Paid:</span>
                           <span className="font-medium">
-                            {formatCurrency(paymentTotals[currency] || 0, currency as any)}
+                            {formatCurrency(filteredPaymentTotals[currency] || 0, currency as any)}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm font-semibold">
                           <span>Remaining:</span>
                           <span
                             className={
-                              remainingBalance[currency] > 0
+                              filteredRemainingBalance[currency] > 0
                                 ? "text-orange-600"
-                                : remainingBalance[currency] < 0
+                                : filteredRemainingBalance[currency] < 0
                                 ? "text-red-600"
                                 : "text-green-600"
                             }
                           >
-                            {formatCurrency(remainingBalance[currency] || 0, currency as any)}
+                            {formatCurrency(filteredRemainingBalance[currency] || 0, currency as any)}
                           </span>
                         </div>
                       </div>
@@ -288,11 +481,11 @@ export default function EmployeeDetailPage() {
         {/* Content */}
         <div className="flex-1 overflow-auto p-4 space-y-6">
           {/* Payment History */}
-          {payments.length > 0 && (
-            <div>
+          {filteredPayments.length > 0 && (
+            <div ref={paymentRef}>
               <h2 className="text-lg font-semibold mb-3">Payment History</h2>
               <div className="space-y-3">
-                {payments.map((payment) => (
+                {filteredPayments.map((payment) => (
                   <Card 
                     key={payment.id} 
                     className="p-4 cursor-pointer hover:bg-accent transition-colors"
@@ -333,7 +526,7 @@ export default function EmployeeDetailPage() {
           )}
 
           {/* Attendance Records */}
-          {attendance.length === 0 ? (
+          {filteredAttendance.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <Clock className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No attendance records</h3>
@@ -342,7 +535,8 @@ export default function EmployeeDetailPage() {
               </p>
             </div>
           ) : (
-            Object.entries(attendanceByStore).map(([storeName, records]) => (
+            <div ref={attendanceRef}>
+              {Object.entries(attendanceByStore).map(([storeName, records]) => (
               <div key={storeName}>
                 <h2 className="text-lg font-semibold mb-3">{storeName}</h2>
                 <div className="space-y-3">
@@ -380,7 +574,8 @@ export default function EmployeeDetailPage() {
                   ))}
                 </div>
               </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>
