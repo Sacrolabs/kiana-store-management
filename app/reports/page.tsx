@@ -234,6 +234,8 @@ export default function ReportsPage() {
             justEat: 0,
             mylocal: 0,
             creditCard: 0,
+            deliveroo: 0,
+            uberEats: 0,
           };
         }
         acc[sale.currency].cash += sale.cash || 0;
@@ -242,6 +244,8 @@ export default function ReportsPage() {
         acc[sale.currency].justEat += sale.justEat || 0;
         acc[sale.currency].mylocal += sale.mylocal || 0;
         acc[sale.currency].creditCard += sale.creditCard || 0;
+        acc[sale.currency].deliveroo += (sale as any).deliveroo || 0;
+        acc[sale.currency].uberEats += (sale as any).uberEats || 0;
         return acc;
       }, {});
 
@@ -600,7 +604,8 @@ export default function ReportsPage() {
                 {Object.entries(stats.paymentMethodTotals).map(([currency, methods]: [string, any]) => {
                   // Calculate total for percentage
                   const total = methods.cash + methods.online + methods.delivery + 
-                                methods.justEat + methods.mylocal + methods.creditCard;
+                                methods.justEat + methods.mylocal + methods.creditCard +
+                                ((methods as any).deliveroo || 0) + ((methods as any).uberEats || 0);
                   
                   if (total === 0) return null;
 
@@ -612,6 +617,8 @@ export default function ReportsPage() {
                     { name: "Just Eat", amount: methods.justEat, color: "text-red-600" },
                     { name: "MyLocal", amount: methods.mylocal, color: "text-purple-600" },
                     { name: "Credit Card", amount: methods.creditCard, color: "text-indigo-600" },
+                    { name: "Deliveroo", amount: (methods as any).deliveroo || 0, color: "text-teal-600" },
+                    { name: "Uber Eats", amount: (methods as any).uberEats || 0, color: "text-lime-600" },
                   ].filter((item) => item.amount > 0); // Only show non-zero values
 
                   return (

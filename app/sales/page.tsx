@@ -299,6 +299,18 @@ export default function SalesPage() {
                       <div className="text-xs text-muted-foreground">Card</div>
                       <div className="font-medium">{formatCurrency(sale.creditCard, sale.currency as any)}</div>
                     </div>
+                    {((sale as any).deliveroo !== undefined && (sale as any).deliveroo > 0) && (
+                      <div>
+                        <div className="text-xs text-muted-foreground">Deliveroo</div>
+                        <div className="font-medium">{formatCurrency((sale as any).deliveroo, sale.currency as any)}</div>
+                      </div>
+                    )}
+                    {((sale as any).uberEats !== undefined && (sale as any).uberEats > 0) && (
+                      <div>
+                        <div className="text-xs text-muted-foreground">Uber Eats</div>
+                        <div className="font-medium">{formatCurrency((sale as any).uberEats, sale.currency as any)}</div>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Cash Reconciliation */}

@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await safeJsonParse(request);
-    const { storeId, currency, date, cash, online, delivery, justEat, mylocal, creditCard, cashInTill, difference, notes } = body;
+    const { storeId, currency, date, cash, online, delivery, justEat, mylocal, creditCard, deliveroo, uberEats, cashInTill, difference, notes } = body;
 
     // Validation
     if (!storeId) {
@@ -120,10 +120,12 @@ export async function POST(request: NextRequest) {
     const justEatAmount = justEat !== undefined ? parseInteger(justEat, "justEat", { min: 0 }) : 0;
     const mylocalAmount = mylocal !== undefined ? parseInteger(mylocal, "mylocal", { min: 0 }) : 0;
     const creditCardAmount = creditCard !== undefined ? parseInteger(creditCard, "creditCard", { min: 0 }) : 0;
+    const deliverooAmount = deliveroo !== undefined ? parseInteger(deliveroo, "deliveroo", { min: 0 }) : 0;
+    const uberEatsAmount = uberEats !== undefined ? parseInteger(uberEats, "uberEats", { min: 0 }) : 0;
     const cashInTillAmount = cashInTill !== undefined ? parseInteger(cashInTill, "cashInTill", { min: 0 }) : 0;
     const differenceAmount = difference !== undefined ? parseInteger(difference, "difference") : 0;
 
-    const total = cashAmount + onlineAmount + deliveryAmount + justEatAmount + mylocalAmount + creditCardAmount;
+    const total = cashAmount + onlineAmount + deliveryAmount + justEatAmount + mylocalAmount + creditCardAmount + deliverooAmount + uberEatsAmount;
 
     // Validate date if provided
     const saleDate = date ? parseDate(date, "date") : new Date();
@@ -139,6 +141,8 @@ export async function POST(request: NextRequest) {
         justEat: justEatAmount,
         mylocal: mylocalAmount,
         creditCard: creditCardAmount,
+        deliveroo: deliverooAmount,
+        uberEats: uberEatsAmount,
         total,
         cashInTill: cashInTillAmount,
         difference: differenceAmount,
