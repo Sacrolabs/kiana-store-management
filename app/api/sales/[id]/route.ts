@@ -58,7 +58,7 @@ export async function PATCH(
     validateUUID(params.id, "sale ID");
 
     const body = await safeJsonParse(request);
-    const { storeId, currency, date, cash, online, delivery, justEat, mylocal, creditCard, cashInTill, difference, notes } = body;
+    const { storeId, currency, date, cash, online, delivery, justEat, mylocal, creditCard, deliveroo, uberEats, cashInTill, difference, notes } = body;
 
     // Check if sale exists
     const existingSale = await prisma.sale.findUnique({
@@ -110,6 +110,8 @@ export async function PATCH(
     if (justEat !== undefined) amounts.justEat = parseInteger(justEat, "justEat", { min: 0 });
     if (mylocal !== undefined) amounts.mylocal = parseInteger(mylocal, "mylocal", { min: 0 });
     if (creditCard !== undefined) amounts.creditCard = parseInteger(creditCard, "creditCard", { min: 0 });
+    if (deliveroo !== undefined) amounts.deliveroo = parseInteger(deliveroo, "deliveroo", { min: 0 });
+    if (uberEats !== undefined) amounts.uberEats = parseInteger(uberEats, "uberEats", { min: 0 });
 
     // Update cash reconciliation fields
     if (cashInTill !== undefined) updateData.cashInTill = parseInteger(cashInTill, "cashInTill", { min: 0 });
@@ -127,6 +129,8 @@ export async function PATCH(
         justEat: amounts.justEat !== undefined ? amounts.justEat : existingSale.justEat,
         mylocal: amounts.mylocal !== undefined ? amounts.mylocal : existingSale.mylocal,
         creditCard: amounts.creditCard !== undefined ? amounts.creditCard : existingSale.creditCard,
+        deliveroo: amounts.deliveroo !== undefined ? amounts.deliveroo : (existingSale as any).deliveroo || 0,
+        uberEats: amounts.uberEats !== undefined ? amounts.uberEats : (existingSale as any).uberEats || 0,
       };
 
       updateData.total = Object.values(finalAmounts).reduce((sum, val) => sum + val, 0);

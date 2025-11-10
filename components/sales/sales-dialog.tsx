@@ -61,6 +61,8 @@ export function SalesDialog({
   const [justEat, setJustEat] = useState(0);
   const [mylocal, setMylocal] = useState(0);
   const [creditCard, setCreditCard] = useState(0);
+  const [deliveroo, setDeliveroo] = useState(0);
+  const [uberEats, setUberEats] = useState(0);
   const [cashInTill, setCashInTill] = useState(0);
   const [notes, setNotes] = useState("");
 
@@ -78,6 +80,8 @@ export function SalesDialog({
       setJustEat(saleToEdit.justEat);
       setMylocal(saleToEdit.mylocal);
       setCreditCard(saleToEdit.creditCard);
+      setDeliveroo(saleToEdit.deliveroo || 0);
+      setUberEats(saleToEdit.uberEats || 0);
       setCashInTill(saleToEdit.cashInTill || 0);
       setNotes(saleToEdit.notes || "");
     } else if (open && storeId) {
@@ -150,7 +154,7 @@ export function SalesDialog({
   };
 
   const calculateTotal = (): number => {
-    return cash + online + delivery + justEat + mylocal + creditCard;
+    return cash + online + delivery + justEat + mylocal + creditCard + deliveroo + uberEats;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -188,6 +192,8 @@ export function SalesDialog({
           justEat,
           mylocal,
           creditCard,
+          deliveroo,
+          uberEats,
           cashInTill,
           difference,
           notes: notes.trim(),
@@ -218,6 +224,8 @@ export function SalesDialog({
     setDelivery(0);
     setJustEat(0);
     setMylocal(0);
+    setDeliveroo(0);
+    setUberEats(0);
     setCreditCard(0);
     setCashInTill(0);
     setNotes("");
@@ -356,6 +364,22 @@ export function SalesDialog({
                 onChange={setCreditCard}
                 currency={selectedCurrency}
                 id="creditCard"
+              />
+
+              <CurrencyInput
+                label="Deliveroo"
+                value={deliveroo}
+                onChange={setDeliveroo}
+                currency={selectedCurrency}
+                id="deliveroo"
+              />
+
+              <CurrencyInput
+                label="Uber Eats"
+                value={uberEats}
+                onChange={setUberEats}
+                currency={selectedCurrency}
+                id="uberEats"
               />
             </div>
           </div>

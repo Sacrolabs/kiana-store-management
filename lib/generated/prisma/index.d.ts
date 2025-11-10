@@ -6818,6 +6818,8 @@ export namespace Prisma {
     justEat: number | null
     mylocal: number | null
     creditCard: number | null
+    deliveroo: number | null
+    uberEats: number | null
     total: number | null
     cashInTill: number | null
     difference: number | null
@@ -6830,6 +6832,8 @@ export namespace Prisma {
     justEat: number | null
     mylocal: number | null
     creditCard: number | null
+    deliveroo: number | null
+    uberEats: number | null
     total: number | null
     cashInTill: number | null
     difference: number | null
@@ -6846,6 +6850,8 @@ export namespace Prisma {
     justEat: number | null
     mylocal: number | null
     creditCard: number | null
+    deliveroo: number | null
+    uberEats: number | null
     total: number | null
     cashInTill: number | null
     difference: number | null
@@ -6865,6 +6871,8 @@ export namespace Prisma {
     justEat: number | null
     mylocal: number | null
     creditCard: number | null
+    deliveroo: number | null
+    uberEats: number | null
     total: number | null
     cashInTill: number | null
     difference: number | null
@@ -6884,6 +6892,8 @@ export namespace Prisma {
     justEat: number
     mylocal: number
     creditCard: number
+    deliveroo: number
+    uberEats: number
     total: number
     cashInTill: number
     difference: number
@@ -6901,6 +6911,8 @@ export namespace Prisma {
     justEat?: true
     mylocal?: true
     creditCard?: true
+    deliveroo?: true
+    uberEats?: true
     total?: true
     cashInTill?: true
     difference?: true
@@ -6913,6 +6925,8 @@ export namespace Prisma {
     justEat?: true
     mylocal?: true
     creditCard?: true
+    deliveroo?: true
+    uberEats?: true
     total?: true
     cashInTill?: true
     difference?: true
@@ -6929,6 +6943,8 @@ export namespace Prisma {
     justEat?: true
     mylocal?: true
     creditCard?: true
+    deliveroo?: true
+    uberEats?: true
     total?: true
     cashInTill?: true
     difference?: true
@@ -6948,6 +6964,8 @@ export namespace Prisma {
     justEat?: true
     mylocal?: true
     creditCard?: true
+    deliveroo?: true
+    uberEats?: true
     total?: true
     cashInTill?: true
     difference?: true
@@ -6967,6 +6985,8 @@ export namespace Prisma {
     justEat?: true
     mylocal?: true
     creditCard?: true
+    deliveroo?: true
+    uberEats?: true
     total?: true
     cashInTill?: true
     difference?: true
@@ -7073,6 +7093,8 @@ export namespace Prisma {
     justEat: number
     mylocal: number
     creditCard: number
+    deliveroo: number
+    uberEats: number
     total: number
     cashInTill: number
     difference: number
@@ -7111,6 +7133,8 @@ export namespace Prisma {
     justEat?: boolean
     mylocal?: boolean
     creditCard?: boolean
+    deliveroo?: boolean
+    uberEats?: boolean
     total?: boolean
     cashInTill?: boolean
     difference?: boolean
@@ -7131,6 +7155,8 @@ export namespace Prisma {
     justEat?: boolean
     mylocal?: boolean
     creditCard?: boolean
+    deliveroo?: boolean
+    uberEats?: boolean
     total?: boolean
     cashInTill?: boolean
     difference?: boolean
@@ -7151,6 +7177,8 @@ export namespace Prisma {
     justEat?: boolean
     mylocal?: boolean
     creditCard?: boolean
+    deliveroo?: boolean
+    uberEats?: boolean
     total?: boolean
     cashInTill?: boolean
     difference?: boolean
@@ -7171,6 +7199,8 @@ export namespace Prisma {
     justEat?: boolean
     mylocal?: boolean
     creditCard?: boolean
+    deliveroo?: boolean
+    uberEats?: boolean
     total?: boolean
     cashInTill?: boolean
     difference?: boolean
@@ -7179,7 +7209,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type SaleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "storeId" | "date" | "currency" | "cash" | "online" | "delivery" | "justEat" | "mylocal" | "creditCard" | "total" | "cashInTill" | "difference" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["sale"]>
+  export type SaleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "storeId" | "date" | "currency" | "cash" | "online" | "delivery" | "justEat" | "mylocal" | "creditCard" | "deliveroo" | "uberEats" | "total" | "cashInTill" | "difference" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["sale"]>
   export type SaleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     store?: boolean | StoreDefaultArgs<ExtArgs>
   }
@@ -7206,6 +7236,8 @@ export namespace Prisma {
       justEat: number
       mylocal: number
       creditCard: number
+      deliveroo: number
+      uberEats: number
       total: number
       cashInTill: number
       difference: number
@@ -7646,6 +7678,8 @@ export namespace Prisma {
     readonly justEat: FieldRef<"Sale", 'Int'>
     readonly mylocal: FieldRef<"Sale", 'Int'>
     readonly creditCard: FieldRef<"Sale", 'Int'>
+    readonly deliveroo: FieldRef<"Sale", 'Int'>
+    readonly uberEats: FieldRef<"Sale", 'Int'>
     readonly total: FieldRef<"Sale", 'Int'>
     readonly cashInTill: FieldRef<"Sale", 'Int'>
     readonly difference: FieldRef<"Sale", 'Int'>
@@ -16125,6 +16159,8 @@ export namespace Prisma {
     justEat: 'justEat',
     mylocal: 'mylocal',
     creditCard: 'creditCard',
+    deliveroo: 'deliveroo',
+    uberEats: 'uberEats',
     total: 'total',
     cashInTill: 'cashInTill',
     difference: 'difference',
@@ -16762,6 +16798,8 @@ export namespace Prisma {
     justEat?: IntFilter<"Sale"> | number
     mylocal?: IntFilter<"Sale"> | number
     creditCard?: IntFilter<"Sale"> | number
+    deliveroo?: IntFilter<"Sale"> | number
+    uberEats?: IntFilter<"Sale"> | number
     total?: IntFilter<"Sale"> | number
     cashInTill?: IntFilter<"Sale"> | number
     difference?: IntFilter<"Sale"> | number
@@ -16782,6 +16820,8 @@ export namespace Prisma {
     justEat?: SortOrder
     mylocal?: SortOrder
     creditCard?: SortOrder
+    deliveroo?: SortOrder
+    uberEats?: SortOrder
     total?: SortOrder
     cashInTill?: SortOrder
     difference?: SortOrder
@@ -16806,6 +16846,8 @@ export namespace Prisma {
     justEat?: IntFilter<"Sale"> | number
     mylocal?: IntFilter<"Sale"> | number
     creditCard?: IntFilter<"Sale"> | number
+    deliveroo?: IntFilter<"Sale"> | number
+    uberEats?: IntFilter<"Sale"> | number
     total?: IntFilter<"Sale"> | number
     cashInTill?: IntFilter<"Sale"> | number
     difference?: IntFilter<"Sale"> | number
@@ -16826,6 +16868,8 @@ export namespace Prisma {
     justEat?: SortOrder
     mylocal?: SortOrder
     creditCard?: SortOrder
+    deliveroo?: SortOrder
+    uberEats?: SortOrder
     total?: SortOrder
     cashInTill?: SortOrder
     difference?: SortOrder
@@ -16853,6 +16897,8 @@ export namespace Prisma {
     justEat?: IntWithAggregatesFilter<"Sale"> | number
     mylocal?: IntWithAggregatesFilter<"Sale"> | number
     creditCard?: IntWithAggregatesFilter<"Sale"> | number
+    deliveroo?: IntWithAggregatesFilter<"Sale"> | number
+    uberEats?: IntWithAggregatesFilter<"Sale"> | number
     total?: IntWithAggregatesFilter<"Sale"> | number
     cashInTill?: IntWithAggregatesFilter<"Sale"> | number
     difference?: IntWithAggregatesFilter<"Sale"> | number
@@ -17804,6 +17850,8 @@ export namespace Prisma {
     justEat?: number
     mylocal?: number
     creditCard?: number
+    deliveroo?: number
+    uberEats?: number
     total?: number
     cashInTill?: number
     difference?: number
@@ -17824,6 +17872,8 @@ export namespace Prisma {
     justEat?: number
     mylocal?: number
     creditCard?: number
+    deliveroo?: number
+    uberEats?: number
     total?: number
     cashInTill?: number
     difference?: number
@@ -17842,6 +17892,8 @@ export namespace Prisma {
     justEat?: IntFieldUpdateOperationsInput | number
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
+    deliveroo?: IntFieldUpdateOperationsInput | number
+    uberEats?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     cashInTill?: IntFieldUpdateOperationsInput | number
     difference?: IntFieldUpdateOperationsInput | number
@@ -17862,6 +17914,8 @@ export namespace Prisma {
     justEat?: IntFieldUpdateOperationsInput | number
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
+    deliveroo?: IntFieldUpdateOperationsInput | number
+    uberEats?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     cashInTill?: IntFieldUpdateOperationsInput | number
     difference?: IntFieldUpdateOperationsInput | number
@@ -17881,6 +17935,8 @@ export namespace Prisma {
     justEat?: number
     mylocal?: number
     creditCard?: number
+    deliveroo?: number
+    uberEats?: number
     total?: number
     cashInTill?: number
     difference?: number
@@ -17899,6 +17955,8 @@ export namespace Prisma {
     justEat?: IntFieldUpdateOperationsInput | number
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
+    deliveroo?: IntFieldUpdateOperationsInput | number
+    uberEats?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     cashInTill?: IntFieldUpdateOperationsInput | number
     difference?: IntFieldUpdateOperationsInput | number
@@ -17918,6 +17976,8 @@ export namespace Prisma {
     justEat?: IntFieldUpdateOperationsInput | number
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
+    deliveroo?: IntFieldUpdateOperationsInput | number
+    uberEats?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     cashInTill?: IntFieldUpdateOperationsInput | number
     difference?: IntFieldUpdateOperationsInput | number
@@ -18982,6 +19042,8 @@ export namespace Prisma {
     justEat?: SortOrder
     mylocal?: SortOrder
     creditCard?: SortOrder
+    deliveroo?: SortOrder
+    uberEats?: SortOrder
     total?: SortOrder
     cashInTill?: SortOrder
     difference?: SortOrder
@@ -18997,6 +19059,8 @@ export namespace Prisma {
     justEat?: SortOrder
     mylocal?: SortOrder
     creditCard?: SortOrder
+    deliveroo?: SortOrder
+    uberEats?: SortOrder
     total?: SortOrder
     cashInTill?: SortOrder
     difference?: SortOrder
@@ -19013,6 +19077,8 @@ export namespace Prisma {
     justEat?: SortOrder
     mylocal?: SortOrder
     creditCard?: SortOrder
+    deliveroo?: SortOrder
+    uberEats?: SortOrder
     total?: SortOrder
     cashInTill?: SortOrder
     difference?: SortOrder
@@ -19032,6 +19098,8 @@ export namespace Prisma {
     justEat?: SortOrder
     mylocal?: SortOrder
     creditCard?: SortOrder
+    deliveroo?: SortOrder
+    uberEats?: SortOrder
     total?: SortOrder
     cashInTill?: SortOrder
     difference?: SortOrder
@@ -19047,6 +19115,8 @@ export namespace Prisma {
     justEat?: SortOrder
     mylocal?: SortOrder
     creditCard?: SortOrder
+    deliveroo?: SortOrder
+    uberEats?: SortOrder
     total?: SortOrder
     cashInTill?: SortOrder
     difference?: SortOrder
@@ -20506,6 +20576,8 @@ export namespace Prisma {
     justEat?: number
     mylocal?: number
     creditCard?: number
+    deliveroo?: number
+    uberEats?: number
     total?: number
     cashInTill?: number
     difference?: number
@@ -20524,6 +20596,8 @@ export namespace Prisma {
     justEat?: number
     mylocal?: number
     creditCard?: number
+    deliveroo?: number
+    uberEats?: number
     total?: number
     cashInTill?: number
     difference?: number
@@ -20734,6 +20808,8 @@ export namespace Prisma {
     justEat?: IntFilter<"Sale"> | number
     mylocal?: IntFilter<"Sale"> | number
     creditCard?: IntFilter<"Sale"> | number
+    deliveroo?: IntFilter<"Sale"> | number
+    uberEats?: IntFilter<"Sale"> | number
     total?: IntFilter<"Sale"> | number
     cashInTill?: IntFilter<"Sale"> | number
     difference?: IntFilter<"Sale"> | number
@@ -22125,6 +22201,8 @@ export namespace Prisma {
     justEat?: number
     mylocal?: number
     creditCard?: number
+    deliveroo?: number
+    uberEats?: number
     total?: number
     cashInTill?: number
     difference?: number
@@ -22199,6 +22277,8 @@ export namespace Prisma {
     justEat?: IntFieldUpdateOperationsInput | number
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
+    deliveroo?: IntFieldUpdateOperationsInput | number
+    uberEats?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     cashInTill?: IntFieldUpdateOperationsInput | number
     difference?: IntFieldUpdateOperationsInput | number
@@ -22217,6 +22297,8 @@ export namespace Prisma {
     justEat?: IntFieldUpdateOperationsInput | number
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
+    deliveroo?: IntFieldUpdateOperationsInput | number
+    uberEats?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     cashInTill?: IntFieldUpdateOperationsInput | number
     difference?: IntFieldUpdateOperationsInput | number
@@ -22235,6 +22317,8 @@ export namespace Prisma {
     justEat?: IntFieldUpdateOperationsInput | number
     mylocal?: IntFieldUpdateOperationsInput | number
     creditCard?: IntFieldUpdateOperationsInput | number
+    deliveroo?: IntFieldUpdateOperationsInput | number
+    uberEats?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     cashInTill?: IntFieldUpdateOperationsInput | number
     difference?: IntFieldUpdateOperationsInput | number

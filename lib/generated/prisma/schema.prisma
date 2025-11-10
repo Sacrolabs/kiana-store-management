@@ -122,6 +122,8 @@ model Sale {
   justEat    Int @default(0) @map("just_eat")
   mylocal    Int @default(0)
   creditCard Int @default(0) @map("credit_card")
+  deliveroo  Int @default(0)
+  uberEats   Int @default(0) @map("uber_eats")
   total      Int @default(0)
 
   // Cash reconciliation fields
