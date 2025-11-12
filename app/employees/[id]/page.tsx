@@ -163,13 +163,14 @@ export default function EmployeeDetailPage() {
   const filteredTotals = filteredAttendance.reduce(
     (acc, record) => {
       if (!acc[record.currency]) {
-        acc[record.currency] = { amount: 0, hours: 0 };
+        acc[record.currency] = { amount: 0, hours: 0, days: 0 };
       }
       acc[record.currency].amount += record.amountToPay;
       acc[record.currency].hours += parseFloat(record.hoursWorked.toString());
+      acc[record.currency].days += 1; // Count each attendance record as 1 day
       return acc;
     },
-    {} as Record<string, { amount: number; hours: number }>
+    {} as Record<string, { amount: number; hours: number; days: number }>
   );
 
   // Calculate filtered payment totals
@@ -204,7 +205,7 @@ export default function EmployeeDetailPage() {
 
   // Download payment records as PDF
   const downloadPaymentsPDF = async () => {
-    if (!paymentRef.current || !employee) return;
+    if (!employee) return;
 
     try {
       setDownloadingPayments(true);
@@ -216,33 +217,125 @@ export default function EmployeeDetailPage() {
 
       const pdf = new jsPDF("p", "mm", "a4");
       const pageWidth = 210;
+      const pageHeight = 297;
       const margin = 15;
+      let currentY = 20;
 
       // Add header
-      pdf.setFontSize(20);
+      pdf.setFontSize(18);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Payment Records", margin, 20);
+      pdf.text("Payment Records", margin, currentY);
 
-      pdf.setFontSize(10);
+      currentY += 8;
+      pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Employee: ${employee.name} | Period: ${fromDate} to ${toDate}`, margin, 28);
-      pdf.text(`Generated on: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, margin, 33);
+      pdf.text(`Employee: ${employee.name} | Period: ${fromDate} to ${toDate}`, margin, currentY);
+      
+      currentY += 5;
+      pdf.text(`Generated: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, margin, currentY);
 
+      currentY += 5;
       pdf.setLineWidth(0.5);
-      pdf.line(margin, 36, pageWidth - margin, 36);
+      pdf.line(margin, currentY, pageWidth - margin, currentY);
+      currentY += 8;
 
-      const canvas = await html2canvas(paymentRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
+      // Add summary section
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Summary", margin, currentY);
+      currentY += 6;
+
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "normal");
+      
+      Object.entries(filteredTotals).forEach(([currency, data]) => {
+        const totalDue = data.amount;
+        const totalPaid = filteredPaymentTotals[currency] || 0;
+        const balance = filteredRemainingBalance[currency] || 0;
+
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`${currency}:`, margin, currentY);
+        pdf.setFont("helvetica", "normal");
+        
+        currentY += 4;
+        pdf.text(`Total Due: ${formatCurrency(totalDue, currency as any)}`, margin + 5, currentY);
+        
+        currentY += 4;
+        pdf.text(`Total Paid: ${formatCurrency(totalPaid, currency as any)}`, margin + 5, currentY);
+        
+        currentY += 4;
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`Balance: ${formatCurrency(balance, currency as any)}`, margin + 5, currentY);
+        pdf.setFont("helvetica", "normal");
+        
+        currentY += 6;
       });
 
-      const imgWidth = pageWidth - 2 * margin;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL("image/png");
+      currentY += 2;
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, currentY, pageWidth - margin, currentY);
+      currentY += 8;
 
-      pdf.addImage(imgData, "PNG", margin, 45, imgWidth, imgHeight);
+      // Add payment records
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Payment History", margin, currentY);
+      currentY += 6;
+
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "normal");
+
+      if (filteredPayments.length === 0) {
+        pdf.text("No payment records found for this period.", margin, currentY);
+      } else {
+        filteredPayments.forEach((payment, index) => {
+          // Check if we need a new page
+          if (currentY > pageHeight - 40) {
+            pdf.addPage();
+            currentY = 20;
+          }
+
+          // Date and amount on first line
+          pdf.setFont("helvetica", "bold");
+          pdf.text(format(new Date(payment.paidDate), "dd MMM yyyy"), margin, currentY);
+          pdf.setFont("helvetica", "normal");
+          
+          const amountText = formatCurrency(payment.amountPaid, payment.currency as any);
+          pdf.text(amountText, pageWidth - margin - pdf.getTextWidth(amountText), currentY);
+          
+          currentY += 4;
+          
+          // Method
+          pdf.text(`Method: ${payment.paymentMethod === "CASH" ? "Cash" : "Bank Account"}`, margin + 5, currentY);
+          
+          currentY += 4;
+          
+          // Notes if any
+          if (payment.notes) {
+            const notesText = `Notes: ${payment.notes}`;
+            const maxWidth = pageWidth - (2 * margin) - 10;
+            const lines = pdf.splitTextToSize(notesText, maxWidth);
+            lines.forEach((line: string) => {
+              if (currentY > pageHeight - 20) {
+                pdf.addPage();
+                currentY = 20;
+              }
+              pdf.text(line, margin + 5, currentY);
+              currentY += 4;
+            });
+          }
+          
+          currentY += 3;
+          
+          // Separator line
+          if (index < filteredPayments.length - 1) {
+            pdf.setDrawColor(200, 200, 200);
+            pdf.line(margin, currentY, pageWidth - margin, currentY);
+            currentY += 5;
+          }
+        });
+      }
+
       pdf.save(filename);
       toast.success("PDF downloaded successfully!");
     } catch (error) {
@@ -255,7 +348,7 @@ export default function EmployeeDetailPage() {
 
   // Download attendance records as PDF
   const downloadAttendancePDF = async () => {
-    if (!attendanceRef.current || !employee) return;
+    if (!employee) return;
 
     try {
       setDownloadingAttendance(true);
@@ -267,33 +360,145 @@ export default function EmployeeDetailPage() {
 
       const pdf = new jsPDF("p", "mm", "a4");
       const pageWidth = 210;
+      const pageHeight = 297;
       const margin = 15;
+      let currentY = 20;
 
       // Add header
-      pdf.setFontSize(20);
+      pdf.setFontSize(18);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Attendance Records", margin, 20);
+      pdf.text("Attendance Records", margin, currentY);
 
-      pdf.setFontSize(10);
+      currentY += 8;
+      pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Employee: ${employee.name} | Period: ${fromDate} to ${toDate}`, margin, 28);
-      pdf.text(`Generated on: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, margin, 33);
+      pdf.text(`Employee: ${employee.name} | Period: ${fromDate} to ${toDate}`, margin, currentY);
+      
+      currentY += 5;
+      pdf.text(`Generated: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, margin, currentY);
 
+      currentY += 5;
       pdf.setLineWidth(0.5);
-      pdf.line(margin, 36, pageWidth - margin, 36);
+      pdf.line(margin, currentY, pageWidth - margin, currentY);
+      currentY += 8;
 
-      const canvas = await html2canvas(attendanceRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
+      // Add summary section
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Summary", margin, currentY);
+      currentY += 6;
+
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "normal");
+      
+      Object.entries(filteredTotals).forEach(([currency, data]) => {
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`${currency}:`, margin, currentY);
+        pdf.setFont("helvetica", "normal");
+        
+        currentY += 4;
+        pdf.text(`Total Hours: ${data.hours.toFixed(2)} hours`, margin + 5, currentY);
+        
+        currentY += 4;
+        pdf.text(`Days Present: ${data.days} ${data.days === 1 ? 'day' : 'days'}`, margin + 5, currentY);
+        
+        currentY += 4;
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`Total Amount: ${formatCurrency(data.amount, currency as any)}`, margin + 5, currentY);
+        pdf.setFont("helvetica", "normal");
+        
+        currentY += 6;
       });
 
-      const imgWidth = pageWidth - 2 * margin;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL("image/png");
+      currentY += 2;
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, currentY, pageWidth - margin, currentY);
+      currentY += 8;
 
-      pdf.addImage(imgData, "PNG", margin, 45, imgWidth, imgHeight);
+      // Add attendance records grouped by store
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Attendance Details", margin, currentY);
+      currentY += 6;
+
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "normal");
+
+      if (filteredAttendance.length === 0) {
+        pdf.text("No attendance records found for this period.", margin, currentY);
+      } else {
+        Object.entries(attendanceByStore).forEach(([storeName, records]) => {
+          // Check if we need a new page for store header
+          if (currentY > pageHeight - 30) {
+            pdf.addPage();
+            currentY = 20;
+          }
+
+          // Store name header
+          pdf.setFont("helvetica", "bold");
+          pdf.setFontSize(10);
+          pdf.text(storeName, margin, currentY);
+          currentY += 5;
+
+          pdf.setFontSize(8);
+          pdf.setFont("helvetica", "normal");
+
+          records.forEach((record, index) => {
+            // Check if we need a new page
+            if (currentY > pageHeight - 30) {
+              pdf.addPage();
+              currentY = 20;
+            }
+
+            // Date
+            pdf.setFont("helvetica", "bold");
+            pdf.text(format(new Date(record.checkIn), "dd MMM yyyy"), margin + 3, currentY);
+            pdf.setFont("helvetica", "normal");
+            
+            currentY += 4;
+            
+            // Time
+            const checkInTime = format(new Date(record.checkIn), "HH:mm");
+            const checkOutTime = format(new Date(record.checkOut), "HH:mm");
+            pdf.text(`${checkInTime} - ${checkOutTime}`, margin + 6, currentY);
+            
+            currentY += 4;
+            
+            // Hours and Amount
+            const hours = parseFloat(record.hoursWorked.toString()).toFixed(2);
+            pdf.text(`Hours: ${hours} | Amount: ${formatCurrency(record.amountToPay, record.currency as any)}`, margin + 6, currentY);
+            
+            currentY += 4;
+            
+            // Notes if any
+            if (record.notes) {
+              const notesText = `Notes: ${record.notes}`;
+              const maxWidth = pageWidth - (2 * margin) - 12;
+              const lines = pdf.splitTextToSize(notesText, maxWidth);
+              lines.forEach((line: string) => {
+                if (currentY > pageHeight - 20) {
+                  pdf.addPage();
+                  currentY = 20;
+                }
+                pdf.text(line, margin + 6, currentY);
+                currentY += 4;
+              });
+            }
+            
+            currentY += 2;
+            
+            // Separator line
+            if (index < records.length - 1) {
+              pdf.setDrawColor(220, 220, 220);
+              pdf.line(margin + 3, currentY, pageWidth - margin - 3, currentY);
+              currentY += 4;
+            }
+          });
+
+          currentY += 6;
+        });
+      }
+
       pdf.save(filename);
       toast.success("PDF downloaded successfully!");
     } catch (error) {
@@ -435,8 +640,10 @@ export default function EmployeeDetailPage() {
                       >
                         {formatCurrency(data.amount, currency as any)}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {data.hours.toFixed(2)} hours
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                        <span>{data.hours.toFixed(2)} hours</span>
+                        <span className="text-muted-foreground">•</span>
+                        <span>{data.days} {data.days === 1 ? 'day' : 'days'}</span>
                       </div>
                       
                       <div className="mt-3 pt-3 border-t space-y-2">
