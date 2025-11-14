@@ -229,9 +229,9 @@ model Delivery {
   driverId           String   @map("driver_id")
   storeId            String   @map("store_id")
   deliveryDate       DateTime @map("delivery_date")
-  checkIn            DateTime @map("check_in")
-  checkOut           DateTime @map("check_out")
-  hoursWorked        Decimal  @map("hours_worked") @db.Decimal(10, 2)
+  checkIn            DateTime @default(now()) @map("check_in")
+  checkOut           DateTime @default(now()) @map("check_out")
+  hoursWorked        Decimal  @default(0) @map("hours_worked") @db.Decimal(10, 2)
   numberOfDeliveries Int      @map("number_of_deliveries")
   currency           Currency @default(EUR)
 

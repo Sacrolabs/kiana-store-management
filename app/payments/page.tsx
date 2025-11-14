@@ -348,8 +348,8 @@ export default function PaymentsPage() {
                 </h2>
                 <div className="space-y-3">
                   {employeePayments.map((payment) => (
-                    <Card 
-                      key={payment.id} 
+                    <Card
+                      key={payment.id}
                       className="overflow-hidden cursor-pointer hover:bg-accent transition-colors"
                       onClick={() => handleEditPayment(payment)}
                     >

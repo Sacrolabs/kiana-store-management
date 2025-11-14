@@ -9,7 +9,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { formatCurrency } from "@/lib/currency/utils";
 import { DateFilter, DateRange, DateFilterPreset } from "@/components/common/date-filter";
 import { toast } from "sonner";
-import { startOfDay, endOfDay, startOfWeek, format } from "date-fns";
+import { startOfDay, endOfDay, startOfWeek, startOfMonth, format } from "date-fns";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import {
@@ -35,9 +35,9 @@ export default function ReportsPage() {
   const reportRef = useRef<HTMLDivElement>(null);
 
   // Date filtering state
-  const [datePreset, setDatePreset] = useState<DateFilterPreset>("week");
+  const [datePreset, setDatePreset] = useState<DateFilterPreset>("month");
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: startOfWeek(new Date(), { weekStartsOn: 1 }),
+    from: startOfMonth(new Date()),
     to: endOfDay(new Date()),
   });
 
@@ -55,12 +55,12 @@ export default function ReportsPage() {
       // Get the store name for the filename
       const selectedStore = stores.find((s) => s.id === selectedStoreId);
       const storeName = selectedStore ? selectedStore.name : "All Stores";
-      
+
       // Format dates for filename and header
       const fromDate = format(dateRange.from, "dd-MMM-yyyy");
       const toDate = format(dateRange.to, "dd-MMM-yyyy");
       const dateRangeText = `${fromDate} to ${toDate}`;
-      
+
       // Create filename
       const filename = `Report_${storeName.replace(/\s+/g, "_")}_${format(dateRange.from, "ddMMMyyyy")}-${format(dateRange.to, "ddMMMyyyy")}.pdf`;
 
@@ -69,27 +69,27 @@ export default function ReportsPage() {
       const pageWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
       const margin = 15;
-      
+
       // Add header
       pdf.setFontSize(20);
       pdf.setFont("helvetica", "bold");
       pdf.text("Reports & Analytics", margin, 20);
-      
+
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
       pdf.text(`Store: ${storeName} | Period: ${dateRangeText}`, margin, 28);
       pdf.text(`Generated on: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, margin, 33);
-      
+
       // Draw line under header
       pdf.setLineWidth(0.5);
       pdf.line(margin, 36, pageWidth - margin, 36);
 
       // Clone the report element to avoid modifying the original
       const element = reportRef.current.cloneNode(true) as HTMLElement;
-      
+
       // Get all card elements
       const cards = element.querySelectorAll('[class*="card"]');
-      
+
       // Create a temporary container for rendering
       const container = document.createElement("div");
       container.style.position = "absolute";
@@ -105,7 +105,7 @@ export default function ReportsPage() {
       // Process each card separately
       for (let i = 0; i < cards.length; i++) {
         const card = cards[i] as HTMLElement;
-        
+
         // Clear container and add current card
         container.innerHTML = "";
         const cardClone = card.cloneNode(true) as HTMLElement;
@@ -133,7 +133,7 @@ export default function ReportsPage() {
         // Add card image to PDF
         const imgData = canvas.toDataURL("image/png");
         pdf.addImage(imgData, "PNG", margin, currentY, imgWidth, imgHeight);
-        
+
         // Update Y position for next card
         currentY += imgHeight + 5; // 5mm gap between cards
       }
@@ -349,17 +349,17 @@ export default function ReportsPage() {
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background border-b safe-top">
           <div className="p-4 pb-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-bold">Reports & Analytics</h1>
                 <p className="text-sm text-muted-foreground">
                   Overview of your business
                 </p>
               </div>
-              <Button 
-                onClick={downloadPDF} 
+              <Button
+                onClick={downloadPDF}
                 disabled={downloading || loading}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 <Download className="h-4 w-4" />
                 {downloading ? "Generating..." : "Download PDF"}
@@ -374,6 +374,7 @@ export default function ReportsPage() {
               onChange={setDateRange}
               preset={datePreset}
               onPresetChange={setDatePreset}
+              hideWeekPicker={true}
             />
 
             {/* Store Filter */}
@@ -525,7 +526,7 @@ export default function ReportsPage() {
                         // Calculate total in a common unit (just for display order, showing actual amounts)
                         const hasEur = amounts.EUR > 0;
                         const hasGbp = amounts.GBP > 0;
-                        
+
                         return (
                           <tr key={storeName} className="border-b last:border-b-0">
                             <td className="py-3 px-3 text-sm font-medium">
@@ -603,10 +604,10 @@ export default function ReportsPage() {
               <CardContent>
                 {Object.entries(stats.paymentMethodTotals).map(([currency, methods]: [string, any]) => {
                   // Calculate total for percentage
-                  const total = methods.cash + methods.online + methods.delivery + 
+                  const total = methods.cash + methods.online + methods.delivery +
                                 methods.justEat + methods.mylocal + methods.creditCard +
                                 ((methods as any).deliveroo || 0) + ((methods as any).uberEats || 0);
-                  
+
                   if (total === 0) return null;
 
                   // Prepare table data
@@ -631,7 +632,7 @@ export default function ReportsPage() {
                         />
                         {currency}
                       </h4>
-                      
+
                       {/* Table */}
                       <div className="overflow-x-auto">
                         <table className="w-full">
@@ -744,7 +745,7 @@ export default function ReportsPage() {
               <CardContent className="space-y-4">
                 {Object.entries(stats.totalCashInTill).map(([currency, cashInTillAmount]: [string, any]) => {
                   const differenceAmount = stats.totalDifference?.[currency] || 0;
-                  
+
                   return (
                     <div key={currency} className="space-y-2">
                       <div className="flex items-center gap-2 mb-2">
@@ -753,7 +754,7 @@ export default function ReportsPage() {
                         }`} />
                         <span className="font-semibold">{currency}</span>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Cash in Till:</span>
                         <span className={`font-medium ${
@@ -762,24 +763,24 @@ export default function ReportsPage() {
                           {formatCurrency(cashInTillAmount, currency as any)}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center justify-between pt-1 border-t">
                         <span className="text-sm font-medium">Difference:</span>
                         <span className={`font-bold ${
-                          differenceAmount === 0 
-                            ? "text-green-600" 
-                            : differenceAmount > 0 
-                            ? "text-orange-600" 
+                          differenceAmount === 0
+                            ? "text-green-600"
+                            : differenceAmount > 0
+                            ? "text-orange-600"
                             : "text-red-600"
                         }`}>
                           {formatCurrency(differenceAmount, currency as any)}
                         </span>
                       </div>
-                      
+
                       {differenceAmount !== 0 && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          {differenceAmount > 0 
-                            ? "Sales recorded exceed cash in till" 
+                          {differenceAmount > 0
+                            ? "Sales recorded exceed cash in till"
                             : "Cash in till exceeds sales recorded"}
                         </p>
                       )}
