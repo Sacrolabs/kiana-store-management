@@ -37,9 +37,18 @@ export default function SalesPage() {
   // Store filtering state
   const [selectedStoreId, setSelectedStoreId] = useState<string>("all");
 
+  // Pagination state
+  const [displayLimit, setDisplayLimit] = useState(25);
+  const RECORDS_PER_PAGE = 25;
+
   useEffect(() => {
     Promise.all([fetchSales(), fetchStores()]).finally(() => setLoading(false));
   }, []);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setDisplayLimit(RECORDS_PER_PAGE);
+  }, [dateRange, selectedStoreId]);
 
   const fetchSales = async () => {
     try {
@@ -113,6 +122,10 @@ export default function SalesPage() {
     return matchesDate && matchesStore;
   });
 
+  // Pagination: only show limited records
+  const displayedSales = filteredSales.slice(0, displayLimit);
+  const hasMoreRecords = filteredSales.length > displayLimit;
+
   // Calculate totals by currency (from filtered sales)
   const totals = filteredSales.reduce((acc, sale) => {
     if (!acc[sale.currency]) {
@@ -121,6 +134,10 @@ export default function SalesPage() {
     acc[sale.currency] += sale.total;
     return acc;
   }, {} as Record<string, number>);
+
+  const loadMore = () => {
+    setDisplayLimit((prev) => prev + RECORDS_PER_PAGE);
+  };
 
   const formatDate = (date: Date | string) => {
     try {
@@ -241,8 +258,9 @@ export default function SalesPage() {
               )}
             </div>
           ) : (
-            filteredSales.map((sale) => (
-              <Card
+            <>
+              {displayedSales.map((sale) => (
+                <Card
                 key={sale.id}
                 className="tap-highlight-none active:scale-[0.98] transition-transform cursor-pointer"
                 onClick={() => handleEdit(sale)}
@@ -338,7 +356,21 @@ export default function SalesPage() {
                   )}
                 </CardContent>
               </Card>
-            ))
+              ))}
+
+              {/* Load More Button */}
+              {hasMoreRecords && (
+                <div className="flex justify-center pt-2 pb-4">
+                  <Button
+                    onClick={loadMore}
+                    variant="outline"
+                    className="w-full max-w-xs"
+                  >
+                    Load More ({filteredSales.length - displayLimit} remaining)
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

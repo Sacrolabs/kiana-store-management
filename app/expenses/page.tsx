@@ -45,11 +45,20 @@ export default function ExpensesPage() {
   const [selectedStoreId, setSelectedStoreId] = useState<string>("all");
   const [selectedVendorId, setSelectedVendorId] = useState<string>("all");
 
+  // Pagination state
+  const [displayLimit, setDisplayLimit] = useState(25);
+  const RECORDS_PER_PAGE = 25;
+
   useEffect(() => {
     Promise.all([fetchExpenses(), fetchVendors(), fetchStores()]).finally(() =>
       setLoading(false)
     );
   }, []);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setDisplayLimit(RECORDS_PER_PAGE);
+  }, [dateRange, selectedStoreId, selectedVendorId]);
 
   const fetchExpenses = async () => {
     try {
@@ -95,6 +104,10 @@ export default function ExpensesPage() {
     return matchesDate && matchesStore && matchesVendor;
   });
 
+  // Pagination: only show limited records
+  const displayedExpenses = filteredExpenses.slice(0, displayLimit);
+  const hasMoreRecords = filteredExpenses.length > displayLimit;
+
   // Calculate totals by currency (from filtered expenses)
   const totals = filteredExpenses.reduce((acc, expense) => {
     if (!acc[expense.currency]) {
@@ -103,6 +116,10 @@ export default function ExpensesPage() {
     acc[expense.currency] += expense.amount;
     return acc;
   }, {} as Record<string, number>);
+
+  const loadMore = () => {
+    setDisplayLimit((prev) => prev + RECORDS_PER_PAGE);
+  };
 
   const handleAddVendor = () => {
     setSelectedVendor(null);
@@ -381,12 +398,13 @@ export default function ExpensesPage() {
                   </p>
                 </div>
               ) : (
-                filteredExpenses.map((expense) => (
-                  <Card 
-                    key={expense.id} 
-                    className="p-4 cursor-pointer hover:bg-accent transition-colors"
-                    onClick={() => handleEditExpense(expense)}
-                  >
+                <>
+                  {displayedExpenses.map((expense) => (
+                    <Card 
+                      key={expense.id} 
+                      className="p-4 cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => handleEditExpense(expense)}
+                    >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -447,7 +465,21 @@ export default function ExpensesPage() {
                       </div>
                     </div>
                   </Card>
-                ))
+                  ))}
+
+                  {/* Load More Button */}
+                  {hasMoreRecords && (
+                    <div className="flex justify-center pt-2 pb-4">
+                      <Button
+                        onClick={loadMore}
+                        variant="outline"
+                        className="w-full max-w-xs"
+                      >
+                        Load More ({filteredExpenses.length - displayLimit} remaining)
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
 
