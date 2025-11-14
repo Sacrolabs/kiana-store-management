@@ -18306,9 +18306,9 @@ export namespace Prisma {
   export type DeliveryCreateInput = {
     id?: string
     deliveryDate: Date | string
-    checkIn: Date | string
-    checkOut: Date | string
-    hoursWorked: Decimal | DecimalJsLike | number | string
+    checkIn?: Date | string
+    checkOut?: Date | string
+    hoursWorked?: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -18324,9 +18324,9 @@ export namespace Prisma {
     driverId: string
     storeId: string
     deliveryDate: Date | string
-    checkIn: Date | string
-    checkOut: Date | string
-    hoursWorked: Decimal | DecimalJsLike | number | string
+    checkIn?: Date | string
+    checkOut?: Date | string
+    hoursWorked?: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -18372,9 +18372,9 @@ export namespace Prisma {
     driverId: string
     storeId: string
     deliveryDate: Date | string
-    checkIn: Date | string
-    checkOut: Date | string
-    hoursWorked: Decimal | DecimalJsLike | number | string
+    checkIn?: Date | string
+    checkOut?: Date | string
+    hoursWorked?: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -20741,9 +20741,9 @@ export namespace Prisma {
   export type DeliveryCreateWithoutStoreInput = {
     id?: string
     deliveryDate: Date | string
-    checkIn: Date | string
-    checkOut: Date | string
-    hoursWorked: Decimal | DecimalJsLike | number | string
+    checkIn?: Date | string
+    checkOut?: Date | string
+    hoursWorked?: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -20757,9 +20757,9 @@ export namespace Prisma {
     id?: string
     driverId: string
     deliveryDate: Date | string
-    checkIn: Date | string
-    checkOut: Date | string
-    hoursWorked: Decimal | DecimalJsLike | number | string
+    checkIn?: Date | string
+    checkOut?: Date | string
+    hoursWorked?: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -21736,9 +21736,9 @@ export namespace Prisma {
   export type DeliveryCreateWithoutDriverInput = {
     id?: string
     deliveryDate: Date | string
-    checkIn: Date | string
-    checkOut: Date | string
-    hoursWorked: Decimal | DecimalJsLike | number | string
+    checkIn?: Date | string
+    checkOut?: Date | string
+    hoursWorked?: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -21752,9 +21752,9 @@ export namespace Prisma {
     id?: string
     storeId: string
     deliveryDate: Date | string
-    checkIn: Date | string
-    checkOut: Date | string
-    hoursWorked: Decimal | DecimalJsLike | number | string
+    checkIn?: Date | string
+    checkOut?: Date | string
+    hoursWorked?: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -22256,9 +22256,9 @@ export namespace Prisma {
     id?: string
     driverId: string
     deliveryDate: Date | string
-    checkIn: Date | string
-    checkOut: Date | string
-    hoursWorked: Decimal | DecimalJsLike | number | string
+    checkIn?: Date | string
+    checkOut?: Date | string
+    hoursWorked?: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
@@ -22675,9 +22675,9 @@ export namespace Prisma {
     id?: string
     storeId: string
     deliveryDate: Date | string
-    checkIn: Date | string
-    checkOut: Date | string
-    hoursWorked: Decimal | DecimalJsLike | number | string
+    checkIn?: Date | string
+    checkOut?: Date | string
+    hoursWorked?: Decimal | DecimalJsLike | number | string
     numberOfDeliveries: number
     currency?: $Enums.Currency
     expenseAmount: number
